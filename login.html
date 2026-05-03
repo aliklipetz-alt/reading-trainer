@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - LexoraLab</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="login-box">
+    <h1>LexoraLab</h1>
+    <h2>כניסה למערכת</h2>
+
+    <input id="password" type="password" placeholder="סיסמה / Password" />
+    <button onclick="checkPassword()">כניסה / Login</button>
+
+    <p id="error"></p>
+  </main>
+
+  <script>
+    function checkPassword() {
+      const password = document.getElementById("password").value;
+      const correctPassword = "lexora123";
+
+      if (password === correctPassword) {
+        localStorage.setItem("lexora_logged_in", "yes");
+        window.location.href = "dashboard.html";
+      } else {
+        document.getElementById("error").textContent = "סיסמה שגויה / Wrong password";
+      }
+    }
+  </script>
+</body>
+</html>

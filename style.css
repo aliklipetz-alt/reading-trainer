@@ -1,118 +1,59 @@
-/* ===== Общие настройки ===== */
+/* Общий стиль */
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  height: 100vh;
   background: #0f172a;
   color: white;
+  font-family: Arial;
 }
 
-/* ===== Верхняя панель ===== */
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 30px;
-  background: #020617;
-  border-bottom: 1px solid #1e293b;
-}
-
-.small-link {
-  color: #94a3b8;
-  text-decoration: none;
-  font-size: 14px;
-}
-
-.small-link:hover {
-  color: white;
-}
-
-/* ===== Контейнер ===== */
+/* Центр контейнера */
 .container {
-  text-align: center;
-  margin-top: 60px;
-}
-
-h1 {
-  font-size: 48px;
-  margin-bottom: 10px;
-}
-
-.en {
-  color: #94a3b8;
-  margin-bottom: 40px;
-}
-
-/* ===== Сетка "комнат" ===== */
-.rooms-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 300px);
-  gap: 30px;
-  justify-content: center;
-}
-
-/* ===== Кнопки комнат ===== */
-.room-button {
-  background: #1e293b;
-  color: white;
-  text-decoration: none;
-  padding: 60px 20px;
-  border-radius: 20px;
-  font-size: 26px;
-  font-weight: bold;
-  border: 1px solid #334155;
-  transition: 0.2s;
-}
-
-.room-button span {
-  display: block;
-  font-size: 16px;
-  opacity: 0.7;
-  margin-top: 10px;
-}
-
-.room-button:hover {
-  transform: scale(1.05);
-  background: #334155;
-}
-
-/* ===== Список программ (внутри комнаты) ===== */
-.program-list {
-  max-width: 700px;
-  margin: 40px auto 0;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100%;
+  padding-top: 80px;
+  text-align: center;
 }
 
-/* ===== Кнопки программ ===== */
+/* Заголовок */
+h1 {
+  font-size: 48px;
+  margin-bottom: 60px;
+}
+
+/* Блок с программами */
+.programs {
+  display: flex;
+  flex-direction: row;   /* В РЯД */
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Кнопки */
 .program-button {
-  background: #1e293b;
+  display: inline-block;
+  padding: 20px 30px;
+  border-radius: 15px;
+  background: rgba(100, 120, 255, 0.2);
+  border: 1px solid rgba(255,255,255,0.2);
   color: white;
   text-decoration: none;
-  padding: 28px;
-  border-radius: 18px;
-  font-size: 28px;
-  font-weight: bold;
-  text-align: center;
-  border: 1px solid #334155;
-  transition: 0.2s;
-}
-
-.program-button span {
-  display: block;
-  font-size: 18px;
-  opacity: 0.7;
-  margin-top: 8px;
-  direction: ltr;
+  font-size: 20px;
+  min-width: 160px;
+  transition: 0.3s;
 }
 
 .program-button:hover {
-  transform: scale(1.03);
-  background: #334155;
+  background: rgba(100, 120, 255, 0.4);
+  transform: scale(1.05);
 }
 
-/* ===== Заблокированные кнопки ===== */
-.program-button.locked {
-  opacity: 0.4;
-  pointer-events: none;
+/* Английский текст */
+.en {
+  opacity: 0.7;
+  font-size: 16px;
 }

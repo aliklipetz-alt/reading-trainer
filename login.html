@@ -1,34 +1,37 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - LexoraLab</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <main class="login-box">
-    <h1>LexoraLab</h1>
-    <h2>כניסה למערכת</h2>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - LexoraLab</title>
+<link rel="stylesheet" href="style.css">
 
-    <input id="password" type="password" placeholder="סיסמה / Password" />
-    <button onclick="checkPassword()">כניסה / Login</button>
+<script>
+function login() {
+    const password = document.getElementById("password").value;
 
-    <p id="error"></p>
-  </main>
-
-  <script>
-    function checkPassword() {
-      const password = document.getElementById("password").value;
-      const correctPassword = "lexora123";
-
-      if (password === correctPassword) {
-        localStorage.setItem("lexora_logged_in", "yes");
+    if (password === "1234") {
         window.location.href = "dashboard.html";
-      } else {
-        document.getElementById("error").textContent = "סיסמה שגויה / Wrong password";
-      }
+    } else {
+        document.getElementById("error").innerText = "סיסמה שגויה / Wrong password";
     }
-  </script>
+}
+</script>
+
+</head>
+
+<body class="login">
+
+<div class="login-box">
+    <h1>LexoraLab</h1>
+    <p>כניסה למערכת</p>
+
+    <input type="password" id="password" placeholder="Password / סיסמה">
+
+    <button onclick="login()">כניסה / Login</button>
+
+    <p id="error" style="color:red;"></p>
+</div>
+
 </body>
 </html>

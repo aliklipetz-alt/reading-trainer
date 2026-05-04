@@ -1,42 +1,43 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard - LexoraLab</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - LexoraLab</title>
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <script>
-    if (localStorage.getItem("lexora_logged_in") !== "yes") {
-      window.location.href = "login.html";
-    }
-  </script>
+<header class="topbar">
+  <b>LexoraLab</b>
+  <a href="index.html" class="small-link">בית / Home</a>
+</header>
 
-  <header class="topbar">
-    <b>LexoraLab</b>
-    <button onclick="logout()">יציאה / Logout</button>
-  </header>
+<main class="container">
+  <h1>לוח אימונים</h1>
+  <p class="en">Training Dashboard</p>
 
-  <main class="container">
-    <h1>לוח אימונים</h1>
-
-    <div class="card">
+  <div class="grid">
+    <a class="card active" href="#">
       <h2>אימון קריאה</h2>
-      <p>כאן נוסיף את התרגילים שלך.</p>
-    </div>
+      <p>Reading Trainer</p>
+    </a>
 
-    <div class="card">
-      <h2>סטטיסטיקה</h2>
-      <p>כאן תופיע סטטיסטיקה של המשתמש.</p>
-    </div>
-  </main>
+    <a class="card active" href="#">
+      <h2>אימון מספרים</h2>
+      <p>Number Training</p>
+    </a>
 
-  <script>
-    function logout() {
-      localStorage.removeItem("lexora_logged_in");
-      window.location.href = "login.html";
-    }
-  </script>
+    <a class="card locked" href="#">
+      <h2>אימון עדשות</h2>
+      <p>Lens / Servo Training 🔒</p>
+    </a>
+
+    <a class="card locked" href="#">
+      <h2>סטטיסטיקה מתקדמת</h2>
+      <p>Advanced Statistics 🔒</p>
+    </a>
+  </div>
+</main>
 </body>
 </html>

@@ -1,59 +1,161 @@
-/* Общий стиль */
 body {
   margin: 0;
-  height: 100vh;
+  min-height: 100vh;
   background: #0f172a;
   color: white;
-  font-family: Arial;
+  font-family: Arial, sans-serif;
 }
 
-/* Центр контейнера */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 28px;
+  background: #020617;
+}
+
+.topbar a {
+  color: white;
+  text-decoration: none;
+}
+
 .container {
+  min-height: calc(100vh - 70px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  height: 100%;
-  padding-top: 80px;
   text-align: center;
+  padding-top: 70px;
 }
 
-/* Заголовок */
 h1 {
   font-size: 48px;
-  margin-bottom: 60px;
+  margin: 0 0 18px;
 }
 
-/* Блок с программами */
-.programs {
-  display: flex;
-  flex-direction: row;   /* В РЯД */
-  gap: 20px;
+.en {
+  opacity: 0.75;
+  direction: ltr;
+  margin-bottom: 45px;
+}
+
+/* 4 комнаты */
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 280px);
+  gap: 30px;
   justify-content: center;
-  align-items: center;
+  margin-top: 20px;
 }
 
-/* Кнопки */
-.program-button {
-  display: inline-block;
-  padding: 20px 30px;
-  border-radius: 15px;
-  background: rgba(100, 120, 255, 0.2);
-  border: 1px solid rgba(255,255,255,0.2);
+.room-button {
+  width: 280px;
+  height: 220px;
+  background: #1e293b;
   color: white;
   text-decoration: none;
-  font-size: 20px;
-  min-width: 160px;
-  transition: 0.3s;
+  border-radius: 24px;
+  border: 1px solid #334155;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+  font-size: 32px;
+  font-weight: bold;
+}
+
+.room-button span {
+  display: block;
+  font-size: 18px;
+  opacity: 0.75;
+  margin-top: 12px;
+  direction: ltr;
+}
+
+.room-button:hover {
+  transform: scale(1.04);
+  background: #334155;
+}
+
+/* Страница программ */
+.programs {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 80px;
+}
+
+.program-button {
+  background: #1e293b;
+  color: white;
+  text-decoration: none;
+  padding: 28px 36px;
+  border-radius: 20px;
+  min-width: 180px;
+  border: 1px solid #334155;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  transition: 0.2s;
+}
+
+.program-button span {
+  display: block;
+  font-size: 16px;
+  opacity: 0.7;
+  margin-top: 8px;
+  direction: ltr;
 }
 
 .program-button:hover {
-  background: rgba(100, 120, 255, 0.4);
-  transform: scale(1.05);
+  transform: scale(1.04);
+  background: #334155;
 }
 
-/* Английский текст */
-.en {
-  opacity: 0.7;
-  font-size: 16px;
+.login-box {
+  background: #1e293b;
+  padding: 36px;
+  border-radius: 22px;
+  min-width: 360px;
+}
+
+input {
+  padding: 12px;
+  font-size: 18px;
+  border-radius: 8px;
+  border: none;
+  margin: 12px 0;
+}
+
+button, .btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-size: 18px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.locked {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+@media (max-width: 700px) {
+  .rooms-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .room-button {
+    width: 85vw;
+  }
+
+  .programs {
+    flex-direction: column;
+  }
 }

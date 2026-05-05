@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מאמן קריאה בעברית</title>
+  <style>
+    :root {
+      --bg: #f6f8fc;
+      --panel: #ffffff;
+      --text: #182230;
+      --muted: #64748b;
+      --line: #d9e2ec;
+      --accent: #2563eb;
+      --accent2: #1d4ed8;
+      --danger: #b91c1c;
+      --ok: #166534;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    h1 {
+      font-size: 30px;
+      margin: 0 0 6px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+    }
+
+    .field { margin-bottom: 14px; }
+
+    .field label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      margin-top: 5px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 260px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 18px;
+      line-height: 1.7;
+      background: #fff;
+      direction: rtl;
+      text-align: right;
+    }
+
+    input[type="number"],
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 15px;
+      background: #fff;
+    }
+
+    input[type="range"] { width: 100%; }
+
+    .row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    button, .fileBtn {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .05s ease, opacity .2s ease;
+    }
+
+    button:hover, .fileBtn:hover { opacity: .95; }
+    button:active, .fileBtn:active { transform: translateY(1px); }
+
+    .primary { background: var(--accent); color: #fff; }
+    .secondary { background: #e2e8f0; color: var(--text); }
+    .danger { background: #fee2e2; color: var(--danger); }
+    .ghost { background: rgba(255,255,255,.14); color: #fff; border: 1px solid rgba(255,255,255,.18); }
+
+    .statusRow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fff;
+    }
+
+    .stat .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .stat .value {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .progress {
+      height: 12px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width .15s linear;
+    }
+
+    .mini { font-size: 13px; color: var(--muted); }
+    .hidden { display: none !important; }
+
+    .player {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(180deg, #eef4ff 0%, #dfeafc 100%);
+      display: none;
+      flex-direction: column;
+      padding: 18px;
+      z-index: 9999;
+    }
+
+    .player.active { display: flex; }
+
+    .playerTop {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+
+    .playerTop .titleBox {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      color: #182230;
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    .playerControls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .playerMain {
+      flex: 1;
+      display: grid;
+      grid-template-rows: 1fr auto auto;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .screen {
+      border: 2px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 32px;
+      box-shadow: inset 0 2px 18px rgba(37, 99, 235, 0.04), var(--shadow);
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .chunk {
+      max-width: 95%;
+      font-size: 58px;
+      line-height: 1.45;
+      font-weight: 700;
+      word-break: break-word;
+      direction: rtl;
+      text-align: center;
+      unicode-bidi: plaintext;
+    }
+
+    .playerStats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .playerStats .stat {
+      background: rgba(255,255,255,.85);
+      backdrop-filter: blur(2px);
+    }
+
+    .playerFooter {
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(217,226,236,.9);
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .fullBtnRow {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 900px) {
+      .statusRow, .playerStats { grid-template-columns: 1fr 1fr; }
+      .chunk { font-size: 42px; }
+    }
+
+    @media (max-width: 560px) {
+      .row2, .statusRow, .playerStats { grid-template-columns: 1fr; }
+      .chunk { font-size: 32px; }
+      .player { padding: 12px; }
+      .playerTop { flex-direction: column; align-items: stretch; }
+    }
+  
+    .visualTools {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 14px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(4px);
+    }
+
+    .visualTool {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #e5eefc;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .visualTool input[type="color"] {
+      width: 54px;
+      height: 36px;
+      border: none;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .visualTool input[type="range"] {
+      width: 220px;
+    }
+
+    .visualValue {
+      min-width: 52px;
+      text-align: center;
+      color: #cdd8ea;
+      font-weight: 700;
+    }
+
+
+
+    .setupVisualTools {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f8fbff;
+    }
+
+    .setupVisualTool {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .setupRangeTool {
+      min-width: min(100%, 380px);
+      flex: 1 1 320px;
+    }
+
+    .setupVisualTool input[type="color"] {
+      width: 54px;
+      height: 36px;
+      border: none;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .colorPreviewBox {
+      width: 84px;
+      height: 84px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      font-weight: 800;
+      box-shadow: inset 0 1px 10px rgba(15, 23, 42, 0.06);
+      user-select: none;
+    }
+
+    .playerMainOnly {
+      grid-template-rows: 1fr;
+      gap: 0;
+      height: 100%;
+    }
+
+    .screenOnly {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 48px;
+    }
+
+    .endOverlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(15, 23, 42, 0.26);
+      backdrop-filter: blur(4px);
+    }
+
+    .endCard {
+      width: min(920px, 100%);
+      background: rgba(255,255,255,.96);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .endCard h2 {
+      margin: 0 0 16px;
+      font-size: 28px;
+      text-align: center;
+    }
+
+    .endStats {
+      margin-bottom: 14px;
+    }
+
+    .endButtons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="setupView">
+    <h1>מאמן קריאה בעברית</h1>
+    <div class="subtitle">
+      קודם מגדירים את כל ההגדרות במסך הזה. אחר כך לוחצים על <b>התחלה</b>, והתרגול נפתח במסך מלא עם חלון התצוגה.
+    </div>
+
+    <div class="panel">
+      <h2>הגדרות</h2>
+
+      <div class="field">
+        <label for="textInput">טקסט</label>
+        <textarea id="textInput" placeholder="הדביקו כאן טקסט בעברית לקריאה..."></textarea>
+        <div class="buttons">
+          <label class="fileBtn secondary" style="display:inline-flex;align-items:center;gap:8px;">
+            פתיחת קובץ
+            <input id="fileInput" type="file" accept=".txt,.md,.text" style="display:none">
+          </label>
+          <button id="loadDemoBtn" class="secondary" type="button">טקסט לדוגמה</button>
+          <button id="clearTextBtn" class="danger" type="button">ניקוי הטקסט</button>
+        </div>
+        <div class="hint">אפשר לפתוח קובץ טקסט רגיל. הכול עובד ישירות בדפדפן.</div>
+      </div>
+
+      <div class="field">
+        <label for="modeSelect">מצב חלוקה</label>
+        <select id="modeSelect">
+          <option value="smart">חלוקה חכמה</option>
+          <option value="fixed">מספר קבוע של מילים</option>
+          <option value="range">טווח מילים אקראי</option>
+          <option value="phrases">צירופים / פסוקים קצרים</option>
+          <option value="sentences">משפטים שלמים</option>
+        </select>
+        <div class="hint">החלוקה החכמה מנסה לעצור במקומות טבעיים: פסיקים, חיבורים, סוף רעיון קצר או סוף משפט.</div>
+      </div>
+
+      <div id="smartSettings" class="field">
+        <label>חלוקה חכמה לפי אורך</label>
+        <div class="row2">
+          <div>
+            <input id="smartMinWords" type="number" min="1" max="20" step="1" value="2">
+            <div class="hint">מינימום מילים</div>
+          </div>
+          <div>
+            <input id="smartMaxWords" type="number" min="1" max="25" step="1" value="7">
+            <div class="hint">מקסימום מילים</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="fixedSettings" class="field hidden">
+        <label for="fixedWords">כמה מילים בכל הצגה</label>
+        <input id="fixedWords" type="number" min="1" max="20" step="1" value="3">
+      </div>
+
+      <div id="rangeSettings" class="field hidden">
+        <label>טווח מילים בכל הצגה</label>
+        <div class="row2">
+          <div>
+            <input id="minWords" type="number" min="1" max="20" step="1" value="1">
+            <div class="hint">מינימום</div>
+          </div>
+          <div>
+            <input id="maxWords" type="number" min="1" max="20" step="1" value="6">
+            <div class="hint">מקסימום</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="phraseSettings" class="field hidden">
+        <label for="phraseMaxWords">אורך מקסימלי ליחידה</label>
+        <input id="phraseMaxWords" type="number" min="2" max="30" step="1" value="8">
+        <div class="hint">אם יחידה ארוכה מדי, התוכנה תחלק אותה לתת־יחידות קצרות יותר.</div>
+      </div>
+
+      <div class="field">
+        <label for="speedRange">זמן חשיפה: <span id="speedLabel">900</span> אלפיות שנייה</label>
+        <input id="speedRange" type="range" min="120" max="5000" step="20" value="900">
+      </div>
+
+      <div class="field">
+        <label for="pauseRange">הפסקה בין יחידות: <span id="pauseLabel">0</span> אלפיות שנייה</label>
+        <input id="pauseRange" type="range" min="0" max="2500" step="20" value="0">
+      </div>
+
+      <div class="field">
+        <label for="fontRange">גודל טקסט בחלון: <span id="fontLabel">58</span> px</label>
+        <input id="fontRange" type="range" min="20" max="120" step="1" value="58">
+      </div>
+
+      <div class="field">
+        <label><input id="rtlToggle" type="checkbox" checked> תצוגה מימין לשמאל</label>
+      </div>
+
+      <div class="field">
+        <label>צבע רקע וטקסט</label>
+        <div class="setupVisualTools" aria-label="בחירת צבע וניגודיות">
+          <label class="setupVisualTool">
+            <span>צבע בסיס</span>
+            <input type="color" id="baseColor" value="#2563eb">
+          </label>
+          <label class="setupVisualTool setupRangeTool">
+            <span>ניגודיות</span>
+            <input type="range" id="contrastRange" min="0" max="100" step="1" value="80">
+            <span class="visualValue" id="contrastValue">80%</span>
+          </label>
+          <div class="setupVisualTool">
+            <span>תצוגה מקדימה</span>
+            <div class="colorPreviewBox" id="colorPreviewBox">B</div>
+          </div>
+        </div>
+        <div class="hint">בתצוגה המקדימה רואים מיד איך האות תיראה על הרקע. כשמורידים ניגודיות הטקסט והרקע מתקרבים זה לזה עד כמעט או לגמרי חופפים.</div>
+      </div>
+
+      <div class="field">
+        <label for="rotationRange">סיבוב אקראי של הטקסט: <span id="rotationLabel">0</span>°</label>
+        <input id="rotationRange" type="range" min="0" max="180" step="1" value="0">
+        <div class="hint">בכל הצגה הטקסט יקבל זווית אקראית חדשה בתחום שבחרתם: מ־0 ועד הפלוס/מינוס של הערך הזה.</div>
+      </div>
+
+      <div class="buttons">
+        <button id="startBtn" class="primary" type="button">התחלה</button>
+      </div>
+
+      <div class="statusRow">
+        <div class="stat">
+          <div class="label">סטטוס</div>
+          <div class="value" id="statusValue">מוכן</div>
+        </div>
+        <div class="stat">
+          <div class="label">יחידות</div>
+          <div class="value" id="totalChunks">0</div>
+        </div>
+        <div class="stat">
+          <div class="label">מילים בטקסט</div>
+          <div class="value" id="wordCount">0</div>
+        </div>
+        <div class="stat">
+          <div class="label">משך משוער</div>
+          <div class="value"><span id="estimateValue">0.0</span> דק'</div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <div class="progress"><div class="progress-fill" id="setupProgressFill"></div></div>
+        <div class="mini" id="modeInfo" style="margin-top:8px">עדיין לא נבחר מצב</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="player" id="playerView">
+    <div class="playerMain playerMainOnly">
+      <div class="screen screenOnly" id="screen">
+        <div class="chunk" id="chunkDisplay">כאן יוצג הטקסט</div>
+      </div>
+    </div>
+
+    <div class="endOverlay hidden" id="endOverlay">
+      <div class="endCard">
+        <h2>התרגול הסתיים</h2>
+        <div class="playerStats endStats">
+          <div class="stat">
+            <div class="label">סטטוס</div>
+            <div class="value" id="playerStatusValue">מוכן</div>
+          </div>
+          <div class="stat">
+            <div class="label">יחידות</div>
+            <div class="value"><span id="currentIndex">0</span> / <span id="playerTotalChunks">0</span></div>
+          </div>
+          <div class="stat">
+            <div class="label">מילים בטקסט</div>
+            <div class="value" id="playerWordCount">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">משך משוער</div>
+            <div class="value"><span id="playerEstimateValue">0.0</span> דק'</div>
+          </div>
+        </div>
+        <div class="playerFooter">
+          <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+          <div class="mini" id="playerModeInfo" style="margin-top:8px">עדיין לא נבחר מצב</div>
+        </div>
+        <div class="endButtons">
+          <button id="restartBtn" class="primary" type="button">מהתחלה</button>
+          <button id="backBtn" class="secondary" type="button">חזרה להגדרות</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const textInput = document.getElementById('textInput');
+    const fileInput = document.getElementById('fileInput');
+    const loadDemoBtn = document.getElementById('loadDemoBtn');
+    const clearTextBtn = document.getElementById('clearTextBtn');
+
+    const modeSelect = document.getElementById('modeSelect');
+    const smartSettings = document.getElementById('smartSettings');
+    const fixedSettings = document.getElementById('fixedSettings');
+    const rangeSettings = document.getElementById('rangeSettings');
+    const phraseSettings = document.getElementById('phraseSettings');
+
+    const smartMinWords = document.getElementById('smartMinWords');
+    const smartMaxWords = document.getElementById('smartMaxWords');
+    const fixedWords = document.getElementById('fixedWords');
+    const minWords = document.getElementById('minWords');
+    const maxWords = document.getElementById('maxWords');
+    const phraseMaxWords = document.getElementById('phraseMaxWords');
+
+    const speedRange = document.getElementById('speedRange');
+    const speedLabel = document.getElementById('speedLabel');
+    const fontRange = document.getElementById('fontRange');
+    const fontLabel = document.getElementById('fontLabel');
+    const pauseRange = document.getElementById('pauseRange');
+    const pauseLabel = document.getElementById('pauseLabel');
+    const rtlToggle = document.getElementById('rtlToggle');
+
+    const startBtn = document.getElementById('startBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const backBtn = document.getElementById('backBtn');
+
+    const playerView = document.getElementById('playerView');
+    const endOverlay = document.getElementById('endOverlay');
+    const chunkDisplay = document.getElementById('chunkDisplay');
+    const screen = document.getElementById('screen');
+    const baseColor = document.getElementById('baseColor');
+    const contrastRange = document.getElementById('contrastRange');
+    const contrastValue = document.getElementById('contrastValue');
+    const colorPreviewBox = document.getElementById('colorPreviewBox');
+    const rotationRange = document.getElementById('rotationRange');
+    const rotationLabel = document.getElementById('rotationLabel');
+
+    const statusValue = document.getElementById('statusValue');
+    const playerStatusValue = document.getElementById('playerStatusValue');
+    const currentIndex = document.getElementById('currentIndex');
+    const totalChunks = document.getElementById('totalChunks');
+    const playerTotalChunks = document.getElementById('playerTotalChunks');
+    const wordCount = document.getElementById('wordCount');
+    const playerWordCount = document.getElementById('playerWordCount');
+    const estimateValue = document.getElementById('estimateValue');
+    const playerEstimateValue = document.getElementById('playerEstimateValue');
+    const progressFill = document.getElementById('progressFill');
+    const setupProgressFill = document.getElementById('setupProgressFill');
+    const modeInfo = document.getElementById('modeInfo');
+    const playerModeInfo = document.getElementById('playerModeInfo');
+
+    let chunks = [];
+    let current = 0;
+    let timer = null;
+    let running = false;
+    let paused = false;
+
+    const PUNCT_END = new Set(['.', '!', '?', '…']);
+    const PUNCT_MID = new Set([',', ';', ':', '—', '–']);
+    const OPEN_PUNCT = new Set(['(', '[', '{', '"', '“', '„', '׳', '‘']);
+    const CLOSE_PUNCT = new Set([')', ']', '}', '"', '”', '׳', '’']);
+    const HEBREW_CONNECTORS = new Set(['ו', 'אבל', 'או', 'כי', 'אם', 'אז', 'גם', 'אך', 'אלא', 'לכן', 'אחרי', 'לפני', 'כאשר', 'כש', 'שאם', 'ש']);
+
+    function normalizeText(text) {
+      return text.replace(/\r/g, '\n').replace(/[\t\u00A0]+/g, ' ').replace(/[ ]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    }
+
+    function tokenize(text) {
+      const raw = normalizeText(text);
+      if (!raw) return [];
+      const cleaned = raw.replace(/([.,!?…;:()\[\]{}"“”„'׳״—–-])/g, ' $1 ');
+      return cleaned.split(/\s+/).filter(Boolean);
+    }
+
+    function isPunct(token) { return /^[.,!?…;:()\[\]{}"“”„'׳״—–-]$/.test(token); }
+    function isWordToken(token) { return !isPunct(token); }
+    function getWords(text) { return tokenize(text).filter(isWordToken); }
+
+    function joinTokens(tokens) {
+      let out = '';
+      for (const token of tokens) {
+        if (!out) out = token;
+        else if (PUNCT_END.has(token) || PUNCT_MID.has(token) || CLOSE_PUNCT.has(token)) out += token;
+        else out += ' ' + token;
+      }
+      return out.replace(/\s+([.,!?…;:])/g, '$1').trim();
+    }
+
+    function randomInt(min, max) {
+      const lo = Math.min(min, max);
+      const hi = Math.max(min, max);
+      return Math.floor(Math.random() * (hi - lo + 1)) + lo;
+    }
+
+    function splitBySentences(text) {
+      const raw = normalizeText(text);
+      if (!raw) return [];
+      return raw.replace(/\n+/g, ' ').split(/(?<=[.!?…])\s+/).map(s => s.trim()).filter(Boolean);
+    }
+
+    function splitLongSegmentSmart(segment, maxWordsPerChunk, minWords = 1) {
+      const tokens = tokenize(segment);
+      if (!tokens.length) return [];
+      const parts = [];
+      let buffer = [];
+      let wordCountLocal = 0;
+      function flush() {
+        const txt = joinTokens(buffer).trim();
+        if (txt) parts.push(txt);
+        buffer = [];
+        wordCountLocal = 0;
+      }
+      for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        buffer.push(token);
+        if (isWordToken(token)) wordCountLocal++;
+        const next = tokens[i + 1] || '';
+        const canBreak = wordCountLocal >= minWords;
+        const hardStop = PUNCT_END.has(token);
+        const softStop = PUNCT_MID.has(token) || (isWordToken(next) && HEBREW_CONNECTORS.has(next));
+        const tooLong = wordCountLocal >= maxWordsPerChunk;
+        if ((hardStop && canBreak) || (softStop && wordCountLocal >= Math.max(minWords, Math.floor(maxWordsPerChunk * 0.55))) || tooLong) flush();
+      }
+      flush();
+      return parts;
+    }
+
+    function splitByPhrases(text, maxWordsPerChunk) {
+      const sentences = splitBySentences(text);
+      const out = [];
+      for (const sentence of sentences) {
+        const clauseParts = sentence.split(/(?<=[,;:])\s+|\s+(?=אבל\b|כי\b|אם\b|או\b|כאשר\b|לפני\b|אחרי\b|ולכן\b|לכן\b)/).map(s => s.trim()).filter(Boolean);
+        for (const part of clauseParts) out.push(...splitLongSegmentSmart(part, maxWordsPerChunk, 2));
+      }
+      return out.filter(Boolean);
+    }
+
+    function smartGroupWords(text, min, max, randomMode = true) {
+      const sentences = splitBySentences(text);
+      const out = [];
+      for (const sentence of sentences) {
+        const tokens = tokenize(sentence);
+        let buffer = [];
+        let words = 0;
+        let target = randomMode ? randomInt(min, max) : max;
+        for (let i = 0; i < tokens.length; i++) {
+          const token = tokens[i];
+          const next = tokens[i + 1] || '';
+          buffer.push(token);
+          if (isWordToken(token)) words++;
+          const nearTarget = words >= min && words >= Math.max(1, target - 1);
+          const perfectTarget = words >= target;
+          const punctuationBreak = PUNCT_MID.has(token) || PUNCT_END.has(token);
+          const connectorAhead = HEBREW_CONNECTORS.has(next);
+          const oversize = words >= max;
+          if ((punctuationBreak && nearTarget) || (connectorAhead && nearTarget) || perfectTarget || oversize) {
+            const chunk = joinTokens(buffer);
+            if (chunk) out.push(chunk);
+            buffer = [];
+            words = 0;
+            target = randomMode ? randomInt(min, max) : max;
+          }
+        }
+        const tail = joinTokens(buffer);
+        if (tail) out.push(tail);
+      }
+      return out.filter(Boolean);
+    }
+
+    function splitSmart(text, min, max) {
+      const sentences = splitBySentences(text);
+      const out = [];
+      for (const sentence of sentences) {
+        const clauseParts = sentence.split(/(?<=[,;:])\s+|\s+(?=אבל\b|כי\b|אם\b|או\b|כאשר\b|לפני\b|אחרי\b|ולכן\b|לכן\b)/).map(s => s.trim()).filter(Boolean);
+        for (const part of clauseParts) {
+          const words = getWords(part).length;
+          if (words <= max) out.push(part);
+          else out.push(...smartGroupWords(part, min, max, true));
+        }
+      }
+      return out.filter(Boolean);
+    }
+
+    function buildChunks() {
+      const text = textInput.value;
+      const mode = modeSelect.value;
+      if (!normalizeText(text)) return [];
+      if (mode === 'smart') return splitSmart(text, Math.max(1, parseInt(smartMinWords.value, 10) || 1), Math.max(parseInt(smartMinWords.value, 10) || 1, parseInt(smartMaxWords.value, 10) || 1));
+      if (mode === 'fixed') return smartGroupWords(text, Math.max(1, parseInt(fixedWords.value, 10) || 1), Math.max(1, parseInt(fixedWords.value, 10) || 1), false);
+      if (mode === 'range') return smartGroupWords(text, Math.max(1, parseInt(minWords.value, 10) || 1), Math.max(parseInt(minWords.value, 10) || 1, parseInt(maxWords.value, 10) || 1), true);
+      if (mode === 'phrases') return splitByPhrases(text, Math.max(2, parseInt(phraseMaxWords.value, 10) || 8));
+      if (mode === 'sentences') return splitBySentences(text);
+      return [];
+    }
+
+    function updateModeVisibility() {
+      smartSettings.classList.toggle('hidden', modeSelect.value !== 'smart');
+      fixedSettings.classList.toggle('hidden', modeSelect.value !== 'fixed');
+      rangeSettings.classList.toggle('hidden', modeSelect.value !== 'range');
+      phraseSettings.classList.toggle('hidden', modeSelect.value !== 'phrases');
+      updatePreviewStats();
+    }
+
+    function getSpeedMs() { return parseInt(speedRange.value, 10); }
+    function getPauseMs() { return parseInt(pauseRange.value, 10); }
+
+    function setStatus(text) {
+      statusValue.textContent = text;
+      playerStatusValue.textContent = text;
+    }
+
+    function applyTextDirection() {
+      const rtl = rtlToggle.checked;
+      document.documentElement.dir = rtl ? 'rtl' : 'ltr';
+      chunkDisplay.dir = rtl ? 'rtl' : 'ltr';
+      chunkDisplay.style.direction = rtl ? 'rtl' : 'ltr';
+      chunkDisplay.style.textAlign = 'center';
+      textInput.dir = rtl ? 'rtl' : 'ltr';
+      textInput.style.direction = rtl ? 'rtl' : 'ltr';
+      textInput.style.textAlign = rtl ? 'right' : 'left';
+    }
+
+    function syncTotals() {
+      totalChunks.textContent = String(chunks.length);
+      playerTotalChunks.textContent = String(chunks.length);
+      const words = getWords(textInput.value).length;
+      wordCount.textContent = String(words);
+      playerWordCount.textContent = String(words);
+      const totalMs = chunks.length * (getSpeedMs() + getPauseMs());
+      const mins = (totalMs / 60000).toFixed(1);
+      estimateValue.textContent = mins;
+      playerEstimateValue.textContent = mins;
+    }
+
+    function getRotationDeg() { return Math.max(0, Math.min(180, parseInt(rotationRange.value, 10) || 0)); }
+
+    function getRandomRotation() {
+      const max = getRotationDeg();
+      if (!max) return 0;
+      return (Math.random() * (max * 2)) - max;
+    }
+
+    function showChunk(index) {
+      if (!chunks.length) {
+        chunkDisplay.textContent = 'כאן יוצג הטקסט';
+        chunkDisplay.style.transform = 'rotate(0deg)';
+        currentIndex.textContent = '0';
+        progressFill.style.width = '0%';
+        setupProgressFill.style.width = '0%';
+        return;
+      }
+      current = index;
+      chunkDisplay.textContent = chunks[current] || '';
+      chunkDisplay.style.transform = `rotate(${getRandomRotation().toFixed(2)}deg)`;
+      currentIndex.textContent = String(current + 1);
+      const progress = ((current + 1) / chunks.length) * 100;
+      progressFill.style.width = progress + '%';
+      setupProgressFill.style.width = progress + '%';
+    }
+
+    function clearTimer() {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    }
+
+    function scheduleNext() {
+      clearTimer();
+      if (!running || paused) return;
+      timer = setTimeout(() => {
+        if (getPauseMs() > 0) {
+          chunkDisplay.textContent = '';
+          timer = setTimeout(nextChunk, getPauseMs());
+        } else {
+          nextChunk();
+        }
+      }, getSpeedMs());
+    }
+
+    function nextChunk() {
+      if (!running || paused) return;
+      if (current >= chunks.length - 1) {
+        finishPlayback();
+        return;
+      }
+      showChunk(current + 1);
+      scheduleNext();
+    }
+
+    function finishPlayback() {
+      clearTimer();
+      running = false;
+      paused = false;
+      setStatus('הסתיים');
+      currentIndex.textContent = String(chunks.length);
+      progressFill.style.width = '100%';
+      setupProgressFill.style.width = '100%';
+      endOverlay.classList.remove('hidden');
+    }
+
+    function enterPlayer() {
+      endOverlay.classList.add('hidden');
+      playerView.classList.add('active');
+      const req = playerView.requestFullscreen || playerView.webkitRequestFullscreen || playerView.msRequestFullscreen;
+      if (req) {
+        try { req.call(playerView); } catch (_) {}
+      }
+    }
+
+    function exitPlayer() {
+      endOverlay.classList.add('hidden');
+      playerView.classList.remove('active');
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    function startPlayback(fromBeginning = true) {
+      chunks = buildChunks();
+      syncTotals();
+      if (!chunks.length) {
+        setStatus('אין טקסט');
+        chunkDisplay.textContent = 'קודם צריך להדביק או לפתוח טקסט';
+        currentIndex.textContent = '0';
+        progressFill.style.width = '0%';
+        setupProgressFill.style.width = '0%';
+        return;
+      }
+      enterPlayer();
+      endOverlay.classList.add('hidden');
+      running = true;
+      paused = false;
+      setStatus('רץ');
+      if (fromBeginning) showChunk(0);
+      else showChunk(current);
+      scheduleNext();
+      updatePreviewStats();
+    }
+
+    function pausePlayback() {
+      if (!running) return;
+      paused = true;
+      clearTimer();
+      setStatus('מושהה');
+    }
+
+    function resumePlayback() {
+      if (!running || !paused) return;
+      paused = false;
+      setStatus('רץ');
+      scheduleNext();
+    }
+
+    function stopPlayback(leavePlayer = false) {
+      clearTimer();
+      running = false;
+      paused = false;
+      current = 0;
+      endOverlay.classList.add('hidden');
+      setStatus('נעצר');
+      if (chunks.length) showChunk(0);
+      else {
+        chunkDisplay.textContent = 'כאן יוצג הטקסט';
+        chunkDisplay.style.transform = 'rotate(0deg)';
+        currentIndex.textContent = '0';
+        progressFill.style.width = '0%';
+        setupProgressFill.style.width = '0%';
+      }
+      if (leavePlayer) exitPlayer();
+    }
+
+    function updatePreviewStats() {
+      const simulatedChunks = buildChunks();
+      const words = getWords(textInput.value).length;
+      wordCount.textContent = String(words);
+      playerWordCount.textContent = String(words);
+      totalChunks.textContent = String(simulatedChunks.length);
+      playerTotalChunks.textContent = String(simulatedChunks.length);
+      const totalMs = simulatedChunks.length * (getSpeedMs() + getPauseMs());
+      const mins = (totalMs / 60000).toFixed(1);
+      estimateValue.textContent = mins;
+      playerEstimateValue.textContent = mins;
+      let info = '';
+      if (modeSelect.value === 'smart') info = `חלוקה חכמה: בין ${Math.max(1, parseInt(smartMinWords.value, 10) || 1)} ל־${Math.max(1, parseInt(smartMaxWords.value, 10) || 1)} מילים, עם עצירה טבעית`;
+      else if (modeSelect.value === 'fixed') info = `מספר קבוע: ${Math.max(1, parseInt(fixedWords.value, 10) || 1)} מילים בכל יחידה`;
+      else if (modeSelect.value === 'range') info = `טווח אקראי: ${Math.max(1, parseInt(minWords.value, 10) || 1)} עד ${Math.max(1, parseInt(maxWords.value, 10) || 1)} מילים`;
+      else if (modeSelect.value === 'phrases') info = `צירופים קצרים: עד ${Math.max(2, parseInt(phraseMaxWords.value, 10) || 8)} מילים ביחידה`;
+      else if (modeSelect.value === 'sentences') info = 'משפטים שלמים';
+      modeInfo.textContent = `${info} · סך הכול ${simulatedChunks.length} יחידות`;
+      playerModeInfo.textContent = modeInfo.textContent;
+      chunkDisplay.style.fontSize = fontRange.value + 'px';
+    }
+
+
+    function hexToRgb(hex) {
+      const clean = (hex || '').replace('#', '').trim();
+      if (clean.length !== 6) return { r: 37, g: 99, b: 235 };
+      const num = parseInt(clean, 16);
+      return {
+        r: (num >> 16) & 255,
+        g: (num >> 8) & 255,
+        b: num & 255
+      };
+    }
+
+    function rgbToHex(r, g, b) {
+      return '#' + [r, g, b].map(v => {
+        const clamped = Math.max(0, Math.min(255, Math.round(v)));
+        return clamped.toString(16).padStart(2, '0');
+      }).join('');
+    }
+
+    function mixWith(rgb, target, amount) {
+      return {
+        r: rgb.r + (target.r - rgb.r) * amount,
+        g: rgb.g + (target.g - rgb.g) * amount,
+        b: rgb.b + (target.b - rgb.b) * amount
+      };
+    }
+
+    function applyVisualContrast() {
+      const base = hexToRgb(baseColor.value);
+      const contrast = Math.max(0, Math.min(100, parseInt(contrastRange.value, 10) || 0)) / 100;
+
+      const bgLighten = 0.92 * contrast;
+      const textDarken = 0.78 * contrast;
+
+      const bgRgb = mixWith(base, { r: 255, g: 255, b: 255 }, bgLighten);
+      const textRgb = mixWith(base, { r: 0, g: 0, b: 0 }, textDarken);
+
+      const bgHex = rgbToHex(bgRgb.r, bgRgb.g, bgRgb.b);
+      const textHex = rgbToHex(textRgb.r, textRgb.g, textRgb.b);
+
+      screen.style.background = bgHex;
+      screen.style.backgroundImage = 'none';
+      chunkDisplay.style.color = textHex;
+      colorPreviewBox.style.background = bgHex;
+      colorPreviewBox.style.color = textHex;
+      colorPreviewBox.style.borderColor = textHex;
+      contrastValue.textContent = Math.round(contrast * 100) + '%';
+    }
+
+    function loadDemoText() {
+      textInput.value = 'ילד שלומד לקרוא לא תמיד צריך לראות משפט שלם בבת אחת. לפעמים עדיף להציג מילה אחת, לפעמים שתי מילים, ולפעמים צירוף קצר שמחזיק רעיון אחד ברור. המאמן הזה מציג את הטקסט בהדרגה, בקצב קבוע, וכך אפשר לתרגל קריאה שוטפת, זיהוי מהיר והבנה של מבנה המשפט.';
+      updatePreviewStats();
+      setStatus('נטען טקסט לדוגמה');
+    }
+
+    speedRange.addEventListener('input', () => { speedLabel.textContent = speedRange.value; updatePreviewStats(); });
+    fontRange.addEventListener('input', () => { fontLabel.textContent = fontRange.value; chunkDisplay.style.fontSize = fontRange.value + 'px'; });
+    pauseRange.addEventListener('input', () => { pauseLabel.textContent = pauseRange.value; updatePreviewStats(); });
+    baseColor.addEventListener('input', applyVisualContrast);
+    contrastRange.addEventListener('input', applyVisualContrast);
+    rotationRange.addEventListener('input', () => { rotationLabel.textContent = rotationRange.value; });
+    modeSelect.addEventListener('change', updateModeVisibility);
+    [smartMinWords, smartMaxWords, fixedWords, minWords, maxWords, phraseMaxWords].forEach(el => el.addEventListener('input', updatePreviewStats));
+    textInput.addEventListener('input', updatePreviewStats);
+    rtlToggle.addEventListener('change', applyTextDirection);
+
+    startBtn.addEventListener('click', () => startPlayback(true));
+    restartBtn.addEventListener('click', () => startPlayback(true));
+    backBtn.addEventListener('click', () => stopPlayback(true));
+
+    clearTextBtn.addEventListener('click', () => {
+      textInput.value = '';
+      chunks = [];
+      current = 0;
+      stopPlayback(false);
+      updatePreviewStats();
+      setStatus('הטקסט נוקה');
+    });
+
+    loadDemoBtn.addEventListener('click', loadDemoText);
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        textInput.value = await file.text();
+        updatePreviewStats();
+        setStatus('הקובץ נטען');
+      } catch (_) {
+        setStatus('שגיאה בקובץ');
+        alert('לא ניתן לקרוא את הקובץ.');
+      }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement && playerView.classList.contains('active')) {
+        playerView.classList.remove('active');
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (!running && !paused) startPlayback(true);
+        else if (running && !paused) pausePlayback();
+        else if (running && paused) resumePlayback();
+      }
+      if (e.key.toLowerCase() === 'r') startPlayback(true);
+      if (e.key.toLowerCase() === 's') stopPlayback(false);
+      if (e.key === 'Escape' && playerView.classList.contains('active') && !document.fullscreenElement) {
+        playerView.classList.remove('active');
+      }
+    });
+
+    speedLabel.textContent = speedRange.value;
+    fontLabel.textContent = fontRange.value;
+    pauseLabel.textContent = pauseRange.value;
+    rotationLabel.textContent = rotationRange.value;
+    applyTextDirection();
+    updateModeVisibility();
+    updatePreviewStats();
+    applyVisualContrast();
+  </script>
+</body>
+</html>

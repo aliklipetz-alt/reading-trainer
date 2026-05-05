@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>מאמן זיכרון טקסט</title>
+<style>
+  :root{
+    --bg:#f4f6fb;
+    --panel:#ffffff;
+    --text:#172033;
+    --muted:#667085;
+    --line:#d7ddea;
+    --accent:#2f6fed;
+    --accent2:#eaf1ff;
+    --success:#0f9d58;
+    --error:#d93025;
+    --shadow:0 12px 34px rgba(19,35,71,.12);
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:linear-gradient(180deg,#f7f9ff 0%, #eef3ff 100%);
+    color:var(--text);
+  }
+  .app{
+    max-width:1100px;
+    margin:0 auto;
+    padding:24px;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:22px;
+  }
+  h1,h2,h3{margin:0 0 14px 0}
+  h1{font-size:30px}
+  .subtitle{color:var(--muted); margin-bottom:18px}
+  .grid{
+    display:grid;
+    grid-template-columns:1.3fr 1fr;
+    gap:18px;
+  }
+  .section-title{
+    font-size:18px;
+    margin-bottom:12px;
+  }
+  .row{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:14px;
+  }
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+  }
+  label{font-size:14px; color:#32415f}
+  select, input[type="number"], input[type="range"], textarea, button{
+    font:inherit;
+  }
+  select, input[type="number"], textarea{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px 14px;
+    background:#fff;
+    color:var(--text);
+  }
+  textarea{
+    min-height:220px;
+    resize:vertical;
+    line-height:1.7;
+  }
+  .range-wrap{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px 12px;
+    background:#fff;
+  }
+  .range-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:8px;
+    color:#32415f;
+    font-size:14px;
+  }
+  input[type="range"]{
+    width:100%;
+  }
+  .value-pill{
+    min-width:74px;
+    text-align:center;
+    background:var(--accent2);
+    color:#1547a8;
+    border-radius:999px;
+    padding:5px 10px;
+    font-size:13px;
+    font-weight:700;
+  }
+  .buttons{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:12px;
+  }
+  .btn{
+    border:none;
+    border-radius:12px;
+    padding:12px 18px;
+    cursor:pointer;
+    transition:.18s transform ease, .18s opacity ease;
+  }
+  .btn:hover{transform:translateY(-1px)}
+  .btn-primary{
+    background:var(--accent);
+    color:#fff;
+    font-weight:700;
+  }
+  .btn-secondary{
+    background:#eef3ff;
+    color:#20428a;
+  }
+  .btn-danger{
+    background:#ffe9e7;
+    color:#8d1f17;
+  }
+  .preview-box{
+    border:1px dashed #b9c7e3;
+    border-radius:16px;
+    min-height:240px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    background:linear-gradient(180deg,#fff 0%,#f9fbff 100%);
+    overflow:hidden;
+  }
+  .preview-window{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:2px solid #d2def7;
+    border-radius:18px;
+    background:#fff;
+    overflow:hidden;
+    text-align:center;
+    padding:12px;
+    transition:.15s ease;
+  }
+  .preview-text{
+    line-height:1.7;
+    word-break:break-word;
+  }
+  .hint{
+    color:var(--muted);
+    font-size:13px;
+    line-height:1.5;
+    margin-top:8px;
+  }
+  .hidden{display:none !important;}
+
+  /* Fullscreen test view */
+  #testView{
+    position:fixed;
+    inset:0;
+    background:#fff;
+    z-index:9999;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+  }
+  #topBar{
+    position:absolute;
+    top:14px;
+    inset-inline:16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    color:#41516f;
+    font-size:14px;
+  }
+  #stageWindow{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    border:2px solid #d4dff5;
+    border-radius:24px;
+    background:#fff;
+    padding:16px;
+    overflow:hidden;
+    box-shadow:0 16px 50px rgba(30,55,105,.10);
+  }
+  #stimulusText{
+    line-height:1.7;
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
+  #instruction{
+    margin-top:20px;
+    color:#52627e;
+    text-align:center;
+    max-width:800px;
+    line-height:1.6;
+  }
+  #answerArea{
+    margin-top:22px;
+    width:min(1040px,92vw);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+  }
+  #assembled{
+    min-height:72px;
+    width:100%;
+    border:1px solid #d7ddea;
+    border-radius:18px;
+    background:#fbfcff;
+    padding:14px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-content:flex-start;
+    justify-content:center;
+  }
+  .word{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:40px;
+    padding:8px 14px;
+    border-radius:999px;
+    border:1px solid #cfd8ee;
+    background:#fff;
+    color:#21324f;
+    cursor:pointer;
+    user-select:none;
+    transition:.12s ease;
+  }
+  .word:hover{
+    transform:translateY(-1px);
+    border-color:#9ab2ea;
+  }
+  .word.used{
+    visibility:hidden;
+    pointer-events:none;
+  }
+  #choices{
+    width:100%;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .chip{
+    background:#eef3ff;
+    color:#244696;
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:700;
+  }
+  #feedback{
+    min-height:24px;
+    font-size:18px;
+    font-weight:700;
+  }
+  .success{color:var(--success)}
+  .error{color:var(--error)}
+  #statsCard{
+    width:min(820px,92vw);
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:24px;
+    box-shadow:var(--shadow);
+    padding:24px;
+    display:none;
+  }
+  .stats-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+    margin-top:14px;
+  }
+  .stat{
+    border:1px solid #dce4f5;
+    border-radius:18px;
+    padding:16px;
+    background:#fbfcff;
+  }
+  .stat .label{
+    color:#60708d;
+    font-size:13px;
+    margin-bottom:8px;
+  }
+  .stat .num{
+    font-size:28px;
+    font-weight:700;
+  }
+  @media (max-width: 880px){
+    .grid{grid-template-columns:1fr}
+    .row{grid-template-columns:1fr}
+    h1{font-size:26px}
+    textarea{min-height:180px}
+    #topBar{font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div class="app" id="settingsView">
+  <div class="card">
+    <h1>מאמן זיכרון טקסט</h1>
+    <div class="subtitle">הצגת קטע קצר מתוך טקסט, העלמתו, והרכבתו מחדש מהמילים. המעבר לקטע הבא מתבצע רק לאחר תשובה נכונה.</div>
+
+    <div class="grid">
+      <div>
+        <div class="section-title">טקסט</div>
+        <div class="field">
+          <label for="presetSelect">בחירת טקסט מוכן</label>
+          <select id="presetSelect">
+            <option value="custom">טקסט חופשי של המורה</option>
+            <option value="p1">קריאה היא מיומנות שנבנית בהדרגה. אימון קצר ומדויק יכול לשפר קשב, זיכרון ומהירות עיבוד.</option>
+            <option value="p2">הילד מתבונן בקטע קצר, שומר אותו בזיכרון, ואז מרכיב אותו מחדש לפי סדר המילים הנכון.</option>
+            <option value="p3">בכל ניסיון מוצג חלון קטן של כמה מילים בלבד. אחרי תשובה נכונה ממשיכים באופן רציף לקטע הבא בטקסט.</option>
+          </select>
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label for="textInput">הדבקת טקסט מלא</label>
+          <textarea id="textInput">קריאה היא מיומנות שנבנית בהדרגה. אימון קצר ומדויק יכול לשפר קשב, זיכרון ומהירות עיבוד. הילד מתבונן בקטע קצר, שומר אותו בזיכרון, ואז מרכיב אותו מחדש לפי סדר המילים הנכון. בכל ניסיון מוצג חלון קטן של כמה מילים בלבד. אחרי תשובה נכונה ממשיכים באופן רציף לקטע הבא בטקסט.</textarea>
+        </div>
+        <div class="hint">אפשר להדביק כל טקסט. התוכנה תחלק אותו אוטומטית למקטעים לפי מספר המילים שתבחר.</div>
+
+        <div class="buttons">
+          <button class="btn btn-primary" id="startBtn">התחל מבחן</button>
+          <button class="btn btn-secondary" id="demoBtn">עדכן תצוגה מקדימה</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">הגדרות</div>
+
+        <div class="row">
+          <div class="field">
+            <label for="chunkSize">מספר מילים בכל קטע</label>
+            <input id="chunkSize" type="number" min="1" max="12" value="5" />
+          </div>
+          <div class="field">
+            <label for="showTime">זמן הצגה</label>
+            <input id="showTime" type="number" min="300" max="10000" step="100" value="1800" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="windowWidth">רוחב החלון</label>
+            <div class="range-wrap">
+              <div class="range-top"><span>רוחב</span><span class="value-pill" id="windowWidthVal">520 px</span></div>
+              <input id="windowWidth" type="range" min="240" max="1000" step="10" value="520" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="windowHeight">גובה החלון</label>
+            <div class="range-wrap">
+              <div class="range-top"><span>גובה</span><span class="value-pill" id="windowHeightVal">180 px</span></div>
+              <input id="windowHeight" type="range" min="100" max="420" step="10" value="180" />
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="fontSize">גודל גופן</label>
+          <div class="range-wrap">
+            <div class="range-top"><span>גודל טקסט</span><span class="value-pill" id="fontSizeVal">34 px</span></div>
+            <input id="fontSize" type="range" min="18" max="64" step="1" value="34" />
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:14px;">
+          <label for="extraWords">מספר מילים מבלבלות (אופציונלי)</label>
+          <input id="extraWords" type="number" min="0" max="8" value="0" />
+        </div>
+
+        <div class="field" style="margin-top:14px;">
+          <label><input type="checkbox" id="autoAdvance" checked> מעבר אוטומטי לקטע הבא אחרי תשובה נכונה</label>
+        </div>
+
+        <div class="section-title" style="margin-top:16px;">תצוגה מקדימה</div>
+        <div class="preview-box">
+          <div class="preview-window" id="previewWindow">
+            <div class="preview-text" id="previewText"></div>
+          </div>
+        </div>
+        <div class="hint">לחיצה על "התחל מבחן" תנסה לעבור למסך מלא. במהלך המבחן: רווח = התחלה/המשך, Esc = יציאה.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="testView">
+  <div id="topBar">
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <span class="chip" id="progressChip">קטע 1 / 1</span>
+      <span class="chip" id="statusChip">מוכן</span>
+    </div>
+    <div>רווח = התחלה/המשך &nbsp;|&nbsp; Esc = יציאה</div>
+  </div>
+
+  <div id="stageWindow">
+    <div id="stimulusText"></div>
+  </div>
+
+  <div id="instruction">לחץ על רווח או על הכפתור למטה כדי להציג את הקטע.</div>
+
+  <div id="answerArea" class="hidden">
+    <div id="feedback"></div>
+    <div id="assembled"></div>
+    <div id="choices"></div>
+    <div class="buttons" style="justify-content:center;">
+      <button class="btn btn-secondary" id="clearBtn">נקה תשובה</button>
+      <button class="btn btn-primary" id="checkBtn">בדוק</button>
+      <button class="btn btn-secondary hidden" id="nextBtn">המשך לקטע הבא</button>
+      <button class="btn btn-primary" id="showBtn">הצג קטע</button>
+      <button class="btn btn-danger" id="exitBtn">יציאה</button>
+    </div>
+  </div>
+
+  <div id="statsCard">
+    <h2>סטטיסטיקה</h2>
+    <div class="subtitle" id="statsSubtitle">התרגול הסתיים.</div>
+    <div class="stats-grid">
+      <div class="stat"><div class="label">מספר קטעים</div><div class="num" id="sBlocks">0</div></div>
+      <div class="stat"><div class="label">קטעים נכונים</div><div class="num" id="sCorrect">0</div></div>
+      <div class="stat"><div class="label">טעויות</div><div class="num" id="sErrors">0</div></div>
+      <div class="stat"><div class="label">אחוז הצלחה</div><div class="num" id="sAccuracy">0%</div></div>
+    </div>
+    <div class="buttons" style="justify-content:center; margin-top:20px;">
+      <button class="btn btn-primary" id="restartBtn">מבחן חדש</button>
+      <button class="btn btn-secondary" id="backBtn">חזרה להגדרות</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+
+  const settingsView = $('settingsView');
+  const testView = $('testView');
+  const presetSelect = $('presetSelect');
+  const textInput = $('textInput');
+  const chunkSizeEl = $('chunkSize');
+  const showTimeEl = $('showTime');
+  const windowWidthEl = $('windowWidth');
+  const windowHeightEl = $('windowHeight');
+  const fontSizeEl = $('fontSize');
+  const extraWordsEl = $('extraWords');
+  const autoAdvanceEl = $('autoAdvance');
+
+  const windowWidthVal = $('windowWidthVal');
+  const windowHeightVal = $('windowHeightVal');
+  const fontSizeVal = $('fontSizeVal');
+  const previewWindow = $('previewWindow');
+  const previewText = $('previewText');
+
+  const progressChip = $('progressChip');
+  const statusChip = $('statusChip');
+  const stageWindow = $('stageWindow');
+  const stimulusText = $('stimulusText');
+  const instruction = $('instruction');
+  const answerArea = $('answerArea');
+  const assembled = $('assembled');
+  const choices = $('choices');
+  const feedback = $('feedback');
+  const statsCard = $('statsCard');
+
+  const startBtn = $('startBtn');
+  const demoBtn = $('demoBtn');
+  const showBtn = $('showBtn');
+  const clearBtn = $('clearBtn');
+  const checkBtn = $('checkBtn');
+  const nextBtn = $('nextBtn');
+  const exitBtn = $('exitBtn');
+  const restartBtn = $('restartBtn');
+  const backBtn = $('backBtn');
+
+  const presets = {
+    custom: null,
+    p1: "קריאה היא מיומנות שנבנית בהדרגה. אימון קצר ומדויק יכול לשפר קשב, זיכרון ומהירות עיבוד.",
+    p2: "הילד מתבונן בקטע קצר, שומר אותו בזיכרון, ואז מרכיב אותו מחדש לפי סדר המילים הנכון.",
+    p3: "בכל ניסיון מוצג חלון קטן של כמה מילים בלבד. אחרי תשובה נכונה ממשיכים באופן רציף לקטע הבא בטקסט."
+  };
+
+  // Add answer time field and repeat button if not present
+  function ensureExtraUI() {
+    if (!$('answerTime')) {
+      const row = document.querySelectorAll('.row')[0];
+      const field = document.createElement('div');
+      field.className = 'field';
+      field.innerHTML = `
+        <label for="answerTime">זמן לתשובה</label>
+        <input id="answerTime" type="number" min="1" max="120" step="1" value="20" />
+      `;
+      row.appendChild(field);
+      // make first row 3 columns when space allows
+      row.style.gridTemplateColumns = 'repeat(3,minmax(0,1fr))';
+    }
+    if (!$('repeatBtn')) {
+      const buttonsWrap = checkBtn.parentElement
+      const repeatBtn = document.createElement('button')
+      repeatBtn.className = 'btn btn-secondary hidden'
+      repeatBtn.id = 'repeatBtn'
+      repeatBtn.textContent = 'הצג שוב את הקטע'
+      buttonsWrap.insertBefore(repeatBtn, clearBtn)
+    }
+    if (!$('timerChip')) {
+      const topLeft = document.querySelector('#topBar > div')
+      const chip = document.createElement('span')
+      chip.className = 'chip'
+      chip.id = 'timerChip'
+      chip.textContent = 'זמן תשובה: —'
+      topLeft.appendChild(chip)
+    }
+  }
+  ensureExtraUI();
+
+  const answerTimeEl = $('answerTime');
+  const repeatBtn = $('repeatBtn');
+  const timerChip = $('timerChip');
+
+  let answerCountdownInterval = null;
+  let revealTimeout = null;
+
+  let state = {
+    blocks: [],
+    poolWords: [],
+    index: 0,
+    currentBlock: [],
+    answer: [],
+    phase: 'idle', // idle, showing, answering, correct, finished
+    config: {},
+    stats: { blocks: 0, correct: 0, errors: 0, attempts: 0 },
+    answerSecondsLeft: 0,
+    canRepeatCurrentBlock: false
+  };
+
+  function normalizeWord(word){
+    return word
+      .replace(/[\u0591-\u05C7]/g,'')
+      .replace(/[.,!?;:"'`(){}\[\]<>«»“”„]/g,'')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
+  function splitWords(text){
+    return text
+      .replace(/\n+/g,' ')
+      .split(/\s+/)
+      .map(w => w.trim())
+      .filter(Boolean);
+  }
+
+  function shuffle(arr){
+    const copy = [...arr];
+    for(let i = copy.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function updatePreview(){
+    const ww = Number(windowWidthEl.value);
+    const wh = Number(windowHeightEl.value);
+    const fs = Number(fontSizeEl.value);
+    windowWidthVal.textContent = ww + ' px';
+    windowHeightVal.textContent = wh + ' px';
+    fontSizeVal.textContent = fs + ' px';
+
+    previewWindow.style.width = ww + 'px';
+    previewWindow.style.height = wh + 'px';
+    previewText.style.fontSize = fs + 'px';
+
+    const words = splitWords(textInput.value);
+    const chunk = Math.max(1, Number(chunkSizeEl.value) || 1);
+    previewText.textContent = words.slice(0, chunk).join(' ') || 'תצוגה מקדימה';
+  }
+
+  function setPreset(){
+    const val = presetSelect.value;
+    if (presets[val]) textInput.value = presets[val];
+    updatePreview();
+  }
+
+  function buildBlocks(words, chunkSize){
+    const out = [];
+    for(let i = 0; i < words.length; i += chunkSize){
+      out.push(words.slice(i, i + chunkSize));
+    }
+    return out.filter(b => b.length);
+  }
+
+  function pickDistractors(pool, currentBlock, count){
+    if (count <= 0) return [];
+    const normalizedCurrent = new Set(currentBlock.map(normalizeWord));
+    const candidates = pool.filter(w => !normalizedCurrent.has(normalizeWord(w)));
+    return shuffle([...new Set(candidates)]).slice(0, count);
+  }
+
+  function applyTestWindow(){
+    stageWindow.style.width = state.config.windowWidth + 'px';
+    stageWindow.style.height = state.config.windowHeight + 'px';
+    stimulusText.style.fontSize = state.config.fontSize + 'px';
+  }
+
+  async function enterFullscreen(){
+    const el = document.documentElement;
+    try{
+      if (!document.fullscreenElement && el.requestFullscreen){
+        await el.requestFullscreen();
+      }
+    }catch(e){}
+  }
+
+  function clearTimers() {
+    if (answerCountdownInterval) {
+      clearInterval(answerCountdownInterval);
+      answerCountdownInterval = null;
+    }
+    if (revealTimeout) {
+      clearTimeout(revealTimeout);
+      revealTimeout = null;
+    }
+    timerChip.textContent = 'זמן תשובה: —';
+  }
+
+  async function startTest(){
+    const fullText = textInput.value.trim();
+    const words = splitWords(fullText);
+    const chunkSize = Math.max(1, Math.min(12, Number(chunkSizeEl.value) || 5));
+    const showTime = Math.max(300, Number(showTimeEl.value) || 1800);
+    const answerTime = Math.max(1, Number(answerTimeEl.value) || 20);
+    const windowWidth = Number(windowWidthEl.value);
+    const windowHeight = Number(windowHeightEl.value);
+    const fontSize = Number(fontSizeEl.value);
+    const extraWords = Math.max(0, Number(extraWordsEl.value) || 0);
+    const autoAdvance = !!autoAdvanceEl.checked;
+
+    if (words.length < 1){
+      alert('יש להזין טקסט.');
+      return;
+    }
+
+    state.config = { chunkSize, showTime, answerTime, windowWidth, windowHeight, fontSize, extraWords, autoAdvance };
+    state.blocks = buildBlocks(words, chunkSize);
+    state.poolWords = words;
+    state.index = 0;
+    state.currentBlock = [];
+    state.answer = [];
+    state.phase = 'idle';
+    state.stats = { blocks: state.blocks.length, correct: 0, errors: 0, attempts: 0 };
+    state.answerSecondsLeft = answerTime;
+    state.canRepeatCurrentBlock = false;
+    clearTimers();
+
+    settingsView.classList.add('hidden');
+    testView.style.display = 'flex';
+    statsCard.style.display = 'none';
+    answerArea.classList.add('hidden');
+    stimulusText.textContent = '';
+    assembled.innerHTML = '';
+    choices.innerHTML = '';
+    feedback.textContent = '';
+    feedback.className = '';
+    nextBtn.classList.add('hidden');
+    showBtn.classList.remove('hidden');
+    repeatBtn.classList.add('hidden');
+
+    applyTestWindow();
+    updateProgress();
+    setStatus('מוכן');
+    instruction.textContent = 'לחץ על רווח או על "הצג קטע" כדי להציג את הקטע הראשון.';
+    await enterFullscreen();
+  }
+
+  function updateProgress(){
+    progressChip.textContent = 'קטע ' + Math.min(state.index + 1, state.blocks.length) + ' / ' + state.blocks.length;
+  }
+
+  function setStatus(text){
+    statusChip.textContent = text;
+  }
+
+  function currentBlockText(){
+    return state.currentBlock.join(' ');
+  }
+
+  function showCurrentBlock(isRepeat = false){
+    if (state.phase === 'showing') return;
+    if (state.index >= state.blocks.length){
+      finishTest();
+      return;
+    }
+
+    clearTimers();
+
+    if (!isRepeat) {
+      state.currentBlock = state.blocks[state.index];
+      state.answer = [];
+      assembled.innerHTML = '';
+      choices.innerHTML = '';
+      feedback.textContent = '';
+      feedback.className = '';
+      nextBtn.classList.add('hidden');
+      repeatBtn.classList.add('hidden');
+      answerArea.classList.add('hidden');
+      state.canRepeatCurrentBlock = false;
+    }
+
+    setStatus(isRepeat ? 'מציג שוב' : 'מציג');
+    state.phase = 'showing';
+    updateProgress();
+    stimulusText.textContent = currentBlockText();
+    instruction.textContent = isRepeat ? 'הקטע מוצג שוב. נסה לזכור אותו.' : 'הקטע מוצג עכשיו. נסה לזכור אותו.';
+    showBtn.classList.add('hidden');
+
+    revealTimeout = setTimeout(() => {
+      stimulusText.textContent = '';
+      buildAnswerStage();
+    }, state.config.showTime);
+  }
+
+  function startAnswerTimer() {
+    state.answerSecondsLeft = state.config.answerTime;
+    timerChip.textContent = 'זמן תשובה: ' + state.answerSecondsLeft + ' ש׳';
+
+    answerCountdownInterval = setInterval(() => {
+      state.answerSecondsLeft -= 1;
+      timerChip.textContent = 'זמן תשובה: ' + Math.max(0, state.answerSecondsLeft) + ' ש׳';
+
+      if (state.answerSecondsLeft <= 0) {
+        clearInterval(answerCountdownInterval);
+        answerCountdownInterval = null;
+        if (state.phase === 'answering') {
+          state.stats.errors++;
+          setStatus('נגמר הזמן');
+          feedback.textContent = 'נגמר הזמן. אפשר להציג שוב את אותו קטע ולנסות מחדש.';
+          feedback.className = 'error';
+          instruction.textContent = 'לחץ על "הצג שוב את הקטע" כדי לראות שוב את אותו קטע, ואז נסה מחדש.';
+          repeatBtn.classList.remove('hidden');
+          state.canRepeatCurrentBlock = true;
+        }
+      }
+    }, 1000);
+  }
+
+  function buildAnswerStage(){
+    state.phase = 'answering';
+    setStatus('ממתין לתשובה');
+    instruction.textContent = 'בחר את המילים לפי הסדר הנכון והרכב את הקטע שראית.';
+    answerArea.classList.remove('hidden');
+    showBtn.classList.add('hidden');
+
+    const distractors = pickDistractors(state.poolWords, state.currentBlock, state.config.extraWords);
+    const buttonWords = shuffle([...state.currentBlock, ...distractors]);
+
+    choices.innerHTML = '';
+    assembled.innerHTML = '';
+    if (state.answer.length) state.answer = [];
+    buttonWords.forEach(word => {
+      const btn = document.createElement('button');
+      btn.className = 'word';
+      btn.type = 'button';
+      btn.textContent = word;
+      btn.addEventListener('click', () => {
+        if (state.phase !== 'answering') return;
+        if (state.answerSecondsLeft <= 0) return;
+        btn.classList.add('used');
+        state.answer.push(word);
+
+        const tag = document.createElement('span');
+        tag.className = 'word';
+        tag.textContent = word;
+        tag.addEventListener('click', () => removeTagAt([...assembled.children].indexOf(tag)));
+        assembled.appendChild(tag);
+      });
+      choices.appendChild(btn);
+    });
+
+    clearTimers();
+    startAnswerTimer();
+  }
+
+  function removeTagAt(index){
+    if (state.phase !== 'answering') return;
+    if (index < 0 || index >= state.answer.length) return;
+
+    state.answer.splice(index, 1);
+
+    [...choices.children].forEach(btn => btn.classList.remove('used'));
+    state.answer.forEach(ansWord => {
+      const candidate = [...choices.children].find(btn => !btn.classList.contains('used') && btn.textContent === ansWord);
+      if (candidate) candidate.classList.add('used');
+    });
+
+    assembled.innerHTML = '';
+    state.answer.forEach((w, i) => {
+      const newTag = document.createElement('span');
+      newTag.className = 'word';
+      newTag.textContent = w;
+      newTag.addEventListener('click', () => removeTagAt(i));
+      assembled.appendChild(newTag);
+    });
+  }
+
+  function clearAnswer(){
+    if (state.phase !== 'answering') return;
+    state.answer = [];
+    assembled.innerHTML = '';
+    [...choices.children].forEach(btn => btn.classList.remove('used'));
+    feedback.textContent = '';
+    feedback.className = '';
+  }
+
+  function checkAnswer(){
+    if (state.phase !== 'answering') return;
+    if (state.answerSecondsLeft <= 0) return;
+
+    state.stats.attempts++;
+
+    const expected = state.currentBlock.map(normalizeWord);
+    const actual = state.answer.map(normalizeWord);
+
+    const correct = expected.length === actual.length && expected.every((w, i) => w === actual[i]);
+
+    if (correct){
+      clearTimers();
+      state.phase = 'correct';
+      state.stats.correct++;
+      setStatus('נכון');
+      feedback.textContent = 'נכון מאוד';
+      feedback.className = 'success';
+      instruction.textContent = 'הקטע הורכב נכון.';
+      nextBtn.classList.remove('hidden');
+      repeatBtn.classList.add('hidden');
+      state.canRepeatCurrentBlock = false;
+
+      if (state.config.autoAdvance){
+        setTimeout(nextBlock, 2000);
+      }
+    } else {
+      clearTimers();
+      state.stats.errors++;
+      setStatus('טעות');
+      feedback.textContent = 'יש טעות. השגיאה נרשמה בסטטיסטיקה. אפשר להציג שוב את אותו קטע ולנסות מחדש.';
+      feedback.className = 'error';
+      instruction.textContent = 'לחץ על "הצג שוב את הקטע" כדי לראות שוב את אותו קטע, ואז נסה מחדש.';
+      repeatBtn.classList.remove('hidden');
+      state.canRepeatCurrentBlock = true;
+      state.phase = 'answering';
+    }
+  }
+
+  function repeatCurrentBlock() {
+    if (!state.canRepeatCurrentBlock) return;
+    state.answer = [];
+    assembled.innerHTML = '';
+    feedback.textContent = '';
+    feedback.className = '';
+    [...choices.children].forEach(btn => btn.classList.remove('used'));
+    showCurrentBlock(true);
+  }
+
+  function nextBlock(){
+    clearTimers();
+    if (state.index < state.blocks.length) state.index++;
+    if (state.index >= state.blocks.length){
+      finishTest();
+      return;
+    }
+    state.phase = 'idle';
+    answerArea.classList.add('hidden');
+    feedback.textContent = '';
+    feedback.className = '';
+    assembled.innerHTML = '';
+    choices.innerHTML = '';
+    nextBtn.classList.add('hidden');
+    repeatBtn.classList.add('hidden');
+    showBtn.classList.remove('hidden');
+    state.canRepeatCurrentBlock = false;
+    updateProgress();
+    setStatus('מוכן');
+    instruction.textContent = 'לחץ על רווח או על "הצג קטע" כדי להציג את הקטע הבא.';
+  }
+
+  function finishTest(){
+    clearTimers();
+    state.phase = 'finished';
+    setStatus('הסתיים');
+    stimulusText.textContent = '';
+    answerArea.classList.add('hidden');
+    instruction.textContent = '';
+    statsCard.style.display = 'block';
+
+    const accuracy = state.stats.attempts
+      ? Math.round((state.stats.correct / state.stats.attempts) * 100)
+      : 0;
+
+    $('sBlocks').textContent = state.stats.blocks;
+    $('sCorrect').textContent = state.stats.correct;
+    $('sErrors').textContent = state.stats.errors;
+    $('sAccuracy').textContent = accuracy + '%';
+    $('statsSubtitle').textContent = 'התרגול הסתיים. אפשר להתחיל מחדש או לחזור למסך ההגדרות.';
+  }
+
+  function backToSettings(){
+    clearTimers();
+    state.phase = 'idle';
+    testView.style.display = 'none';
+    settingsView.classList.remove('hidden');
+    statsCard.style.display = 'none';
+    answerArea.classList.add('hidden');
+    if (document.fullscreenElement && document.exitFullscreen){
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  function handleSpaceAction(e){
+    if (e.code !== 'Space') return;
+    if (!settingsView.classList.contains('hidden') === true) return;
+    if (!settingsView.classList.contains('hidden')) return;
+    e.preventDefault();
+
+    if (state.phase === 'idle'){
+      showCurrentBlock();
+    } else if (state.phase === 'correct' && !state.config.autoAdvance){
+      nextBlock();
+    }
+  }
+
+  presetSelect.addEventListener('change', setPreset);
+  [chunkSizeEl, showTimeEl, windowWidthEl, windowHeightEl, fontSizeEl, answerTimeEl].forEach(el => el.addEventListener('input', updatePreview));
+  demoBtn.addEventListener('click', updatePreview);
+  startBtn.addEventListener('click', startTest);
+  showBtn.addEventListener('click', () => showCurrentBlock(false));
+  repeatBtn.addEventListener('click', repeatCurrentBlock);
+  clearBtn.addEventListener('click', clearAnswer);
+  checkBtn.addEventListener('click', checkAnswer);
+  nextBtn.addEventListener('click', nextBlock);
+  exitBtn.addEventListener('click', backToSettings);
+  restartBtn.addEventListener('click', () => { statsCard.style.display = 'none'; startTest(); });
+  backBtn.addEventListener('click', backToSettings);
+
+  document.addEventListener('keydown', handleSpaceAction);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && settingsView.classList.contains('hidden')){
+      backToSettings();
+    }
+  });
+
+  updatePreview();
+})();
+</script>
+
+</body>
+</html>

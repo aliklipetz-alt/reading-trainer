@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reading Servo Choice Sync — Hebrew / English</title>
+<style>
+  body{margin:0;font-family:Arial, sans-serif;background:#111;color:#eee;direction:rtl;}
+  .screen{display:none;min-height:100vh;box-sizing:border-box;padding:24px;}
+  .active{display:block;}
+  .panel{max-width:980px;margin:0 auto;background:#1b1b1b;border:1px solid #444;border-radius:14px;padding:22px;}
+  h1,h2{margin-top:0;}
+  label{display:block;margin-top:14px;color:#ccc;}
+  input,textarea,select,button{font-size:18px;border-radius:8px;border:1px solid #555;padding:8px;box-sizing:border-box;}
+  input,textarea,select{width:100%;background:#222;color:#fff;}
+  textarea{min-height:150px;font-family:Arial, sans-serif;direction:rtl;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  button{cursor:pointer;background:#2e6eea;color:white;border:none;padding:12px 18px;margin-top:14px;}
+  button.secondary{background:#555;}
+  button.danger{background:#9b2d2d;}
+  button:disabled{background:#444;color:#888;cursor:not-allowed;}
+  #testArea{height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;}
+  #stimulus{font-weight:bold;line-height:1.15;max-width:90vw;direction:rtl;}
+  #blank{font-size:30px;color:#555;}
+  #answers{display:grid;grid-template-columns:1fr 1fr;gap:20px;width:min(900px,92vw);}
+  #answers button{font-size:34px;min-height:120px;background:#333;border:2px solid #777;}
+  #answers button:hover{background:#444;}
+  .topbar{position:fixed;top:8px;left:8px;color:#aaa;font-size:14px;z-index:5;direction:ltr;}
+  .status{margin-top:12px;color:#9fd0ff;white-space:pre-wrap;}
+  table{width:100%;border-collapse:collapse;margin-top:16px;}
+  th,td{border:1px solid #555;padding:8px;text-align:center;}
+  th{background:#333;}
+  .he{font-weight:700;}
+  .en{direction:ltr;display:block;color:#aaa;font-size:0.92em;margin-top:2px;}
+  .hint{color:#aaa;line-height:1.5;}
+</style>
+</head>
+<body>
+<div id="setup" class="screen active">
+  <div class="panel">
+    <h1><span class="he">מאמן קריאה + Arduino Servo</span><span class="en">Reading Trainer + Arduino Servo</span></h1>
+    <p class="hint"><span class="he">סדר העבודה: עדשה A → הצגת טקסט קצרה → מסך ריק → 4 תשובות → לחיצה → עדשה B → טקסט חדש.</span><span class="en">Sequence: Lens A → short text exposure → blank screen → 4 answers → click → Lens B → new text.</span></p>
+
+    <button id="connectBtn">חיבור Arduino / Connect Arduino</button>
+    <button id="testABtn" class="secondary">בדיקת מצב A / Test position A</button>
+    <button id="testBBtn" class="secondary">בדיקת מצב B / Test position B</button>
+    <div id="serialStatus" class="status">Arduino לא מחובר. / Arduino is not connected.</div>
+
+    <label><span class="he">מצב בדיקה</span><span class="en">Test mode</span></label>
+    <select id="testMode">
+      <option value="words">מילים / Words</option>
+      <option value="numbers">מספרים / Numbers</option>
+    </select>
+
+    <label id="wordsLabel"><span class="he">מילים/משפטים — כל שורה היא תרגיל נפרד</span><span class="en">Words/phrases — each line is one trial</span></label>
+    <textarea id="words">שלום
+ספר
+בית
+עין
+אור
+מים
+ילד
+דרך
+שמש
+חלון
+</textarea>
+
+    <div class="row">
+      <div><label><span class="he">זמן חשיפת הטקסט, ms</span><span class="en">Text exposure time, ms</span></label><input id="exposureMs" type="number" value="500" min="50" step="50"></div>
+      <div><label><span class="he">הפסקת מסך ריק לפני תשובות, ms</span><span class="en">Blank screen pause before answers, ms</span></label><input id="blankMs" type="number" value="250" min="0" step="50"></div>
+      <div><label><span class="he">גודל הטקסט, px</span><span class="en">Text size, px</span></label><input id="fontSize" type="number" value="96" min="20" step="4"></div>
+      <div><label><span class="he">גודל כפתורי התשובה, px</span><span class="en">Answer button text size, px</span></label><input id="answerFontSize" type="number" value="34" min="16" step="2"></div>
+      <div><label><span class="he">זווית מצב A, לדוגמה −1.00 D</span><span class="en">Position A angle, e.g. −1.00 D</span></label><input id="angleA" type="number" value="0" min="0" max="180"></div>
+      <div><label><span class="he">זווית מצב B, לדוגמה +1.00 D</span><span class="en">Position B angle, e.g. +1.00 D</span></label><input id="angleB" type="number" value="90" min="0" max="180"></div>
+      <div><label><span class="he">המתנה אחרי תנועת servo, ms</span><span class="en">Wait after servo movement, ms</span></label><input id="servoSettleMs" type="number" value="350" min="0" step="50"></div>
+      <div><label><span class="he">מספר תרגילים</span><span class="en">Number of trials</span></label><input id="trialCount" type="number" value="20" min="1"></div>
+      <div class="numberOnly" style="display:none;"><label><span class="he">מספר מינימלי</span><span class="en">Minimum number</span></label><input id="numberMin" type="number" value="1" step="1"></div>
+      <div class="numberOnly" style="display:none;"><label><span class="he">מספר מקסימלי</span><span class="en">Maximum number</span></label><input id="numberMax" type="number" value="99" step="1"></div>
+    </div>
+
+    <button id="startBtn">התחלה / Start</button>
+    <button id="demoBtn" class="secondary">התחלה בלי Arduino / Demo without Arduino</button>
+    <p class="hint"><span class="he">כדי להשתמש ב-Web Serial צריך Chrome או Edge במחשב. לא Safari.</span><span class="en">Web Serial requires Chrome or Edge on a computer. Not Safari.</span></p>
+  </div>
+</div>
+
+<div id="test" class="screen">
+  <div class="topbar" id="topbar"></div>
+  <div id="testArea">
+    <div id="stimulus"></div>
+    <div id="blank" style="display:none;">+</div>
+    <div id="answers" style="display:none;"></div>
+  </div>
+</div>
+
+<div id="results" class="screen">
+  <div class="panel">
+    <h2><span class="he">תוצאות</span><span class="en">Results</span></h2>
+    <div id="summary"></div>
+    <table id="resultTable"></table>
+    <button id="restartBtn">חזרה להגדרות / Back to settings</button>
+  </div>
+</div>
+
+<script>
+let port=null, reader=null, writer=null;
+let connected=false, demoMode=false;
+let trials=[], currentIndex=0, currentLens='A', answerStart=0;
+let results=[];
+
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+function setScreen(id){
+  for(const el of document.querySelectorAll('.screen')) el.classList.remove('active');
+  $(id).classList.add('active');
+}
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function getWords(){
+  return $('words').value.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+}
+function getTestItems(){
+  const mode = $('testMode').value;
+  if(mode === 'numbers'){
+    let min = Number($('numberMin').value);
+    let max = Number($('numberMax').value);
+    if(!Number.isFinite(min)) min = 1;
+    if(!Number.isFinite(max)) max = 99;
+    min = Math.round(min);
+    max = Math.round(max);
+    if(max < min){ const t = min; min = max; max = t; }
+
+    const items = [];
+    for(let n=min; n<=max && items.length<10000; n++){
+      items.push(String(n));
+    }
+    return items;
+  }
+  return getWords();
+}
+function updateModeUI(){
+  const isNumbers = $('testMode').value === 'numbers';
+  $('words').style.display = isNumbers ? 'none' : 'block';
+  $('wordsLabel').style.display = isNumbers ? 'none' : 'block';
+  for(const el of document.querySelectorAll('.numberOnly')){
+    el.style.display = isNumbers ? 'block' : 'none';
+  }
+}
+async function connectArduino(){
+  if(!('serial' in navigator)){
+    $('serialStatus').textContent='הדפדפן הזה לא תומך ב-Web Serial. השתמש ב-Chrome או Edge במחשב. / This browser does not support Web Serial. Use Chrome or Edge on a computer.';
+    return;
+  }
+  port = await navigator.serial.requestPort();
+  await port.open({baudRate:115200});
+  writer = port.writable.getWriter();
+  reader = port.readable.getReader();
+  connected = true;
+  demoMode = false;
+  $('serialStatus').textContent='Arduino מחובר. / Arduino connected.';
+}
+async function readLine(timeoutMs=3000){
+  let text='';
+  const start=performance.now();
+  while(performance.now()-start < timeoutMs){
+    const {value, done} = await reader.read();
+    if(done) break;
+    text += new TextDecoder().decode(value);
+    if(text.includes('\n')) return text.split('\n')[0].trim();
+  }
+  throw new Error('אין תשובה מ-Arduino / No response from Arduino');
+}
+async function sendServo(angle){
+  if(demoMode || !connected){ await sleep(Number($('servoSettleMs').value)||0); return; }
+  const cmd = `MOVE ${angle}\n`;
+  await writer.write(new TextEncoder().encode(cmd));
+  const line = await readLine(5000);
+  if(line !== 'DONE') throw new Error('Arduino ענה / Arduino replied: '+line);
+}
+async function moveToLens(lens){
+  currentLens = lens;
+  $('topbar').textContent = `Lens ${lens}`;
+  const angle = lens==='A' ? Number($('angleA').value) : Number($('angleB').value);
+  await sendServo(angle);
+}
+function makeTrials(){
+  const items=getTestItems();
+  const count=Math.min(Number($('trialCount').value)||items.length, 9999);
+  let pool=[];
+  while(pool.length<count) pool.push(...shuffle(items));
+  pool=pool.slice(0,count);
+  return pool.map((word,i)=>{
+    let wrong=shuffle(items.filter(w=>w!==word)).slice(0,3);
+    while(wrong.length<3) wrong.push(String(Number(word || 0) + wrong.length + 1));
+    return {word, answers:shuffle([word,...wrong]), lens:i%2===0?'A':'B'};
+  });
+}
+async function start(useDemo=false){
+  demoMode=useDemo;
+  if(!demoMode && !connected){ alert('קודם חבר Arduino או בחר Demo. / First connect Arduino or choose Demo.'); return; }
+  const items=getTestItems();
+  if(items.length<4){ alert('צריך לפחות 4 פריטים כדי ליצור ארבע תשובות. / At least 4 items are needed for four answer choices.'); return; }
+  trials=makeTrials(); currentIndex=0; results=[];
+  setScreen('test');
+  await runTrial();
+}
+async function runTrial(){
+  if(currentIndex>=trials.length){ showResults(); return; }
+  const t=trials[currentIndex];
+  $('answers').style.display='none';
+  $('blank').style.display='none';
+  $('stimulus').style.display='block';
+  $('stimulus').textContent='';
+  try{ await moveToLens(t.lens); }
+  catch(e){ alert('שגיאת סנכרון / Synchronization error: '+e.message); setScreen('setup'); return; }
+
+  $('stimulus').style.fontSize = (Number($('fontSize').value)||96)+'px';
+  $('stimulus').textContent = t.word;
+  await sleep(Number($('exposureMs').value)||500);
+  $('stimulus').textContent='';
+  $('stimulus').style.display='none';
+  $('blank').style.display='block';
+  await sleep(Number($('blankMs').value)||0);
+  $('blank').style.display='none';
+  showAnswers(t);
+}
+function showAnswers(t){
+  const box=$('answers');
+  box.innerHTML='';
+  box.style.display='grid';
+  for(const ans of t.answers){
+    const b=document.createElement('button');
+    b.textContent=ans;
+    b.style.fontSize=(Number($('answerFontSize').value)||34)+'px';
+    b.onclick=()=>answer(ans);
+    box.appendChild(b);
+  }
+  answerStart=performance.now();
+}
+async function answer(ans){
+  const t=trials[currentIndex];
+  const rt=Math.round(performance.now()-answerStart);
+  results.push({n:currentIndex+1, word:t.word, lens:t.lens, answer:ans, correct:ans===t.word, rt});
+  currentIndex++;
+  await runTrial();
+}
+function showResults(){
+  setScreen('results');
+  const correct=results.filter(r=>r.correct).length;
+  const avg=Math.round(results.reduce((s,r)=>s+r.rt,0)/Math.max(1,results.length));
+  $('summary').innerHTML=`נכון / Correct: <b>${correct}/${results.length}</b><br>זמן תגובה ממוצע / Average response time: <b>${avg} ms</b>`;
+  const rows=results.map(r=>`<tr><td>${r.n}</td><td>${r.lens}</td><td>${r.word}</td><td>${r.answer}</td><td>${r.correct?'✓':'✗'}</td><td>${r.rt}</td></tr>`).join('');
+  $('resultTable').innerHTML='<tr><th>#</th><th>עדשה / Lens</th><th>טקסט / Text</th><th>תשובה / Answer</th><th>OK</th><th>ms</th></tr>'+rows;
+}
+
+$('testMode').onchange=updateModeUI;
+updateModeUI();
+
+$('connectBtn').onclick=()=>connectArduino().catch(e=>$('serialStatus').textContent='שגיאה / Error: '+e.message);
+$('testABtn').onclick=()=>moveToLens('A').catch(e=>alert(e.message));
+$('testBBtn').onclick=()=>moveToLens('B').catch(e=>alert(e.message));
+$('startBtn').onclick=()=>start(false);
+$('demoBtn').onclick=()=>start(true);
+$('restartBtn').onclick=()=>setScreen('setup');
+
+document.addEventListener('keydown', async (e) => {
+  if (e.key === 'Escape') {
+    running = false;
+
+    try {
+      $('stimulus').textContent = '';
+      $('answers').style.display = 'none';
+      $('blank').style.display = 'none';
+    } catch (err) {}
+
+    try {
+      if (connected && !demoMode) {
+        await moveToLens('A');
+      }
+    } catch (err) {
+      console.log('ESC move error:', err);
+    }
+
+    setScreen('setup');
+    $('serialStatus').textContent = 'עצירה על ידי ESC / Stopped by ESC';
+  }
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Rashi+Hebrew:wght@400;700&display=swap" rel="stylesheet">
+  <title>Hebrew Reading Ticker Training — Full Screen</title>
+  <style>
+    :root{
+      --bg:#f4f7fb;
+      --panel:#ffffff;
+      --panel2:#eef3fb;
+      --text:#15202b;
+      --muted:#5f6b7a;
+      --accent:#2563eb;
+      --accent2:#1d4ed8;
+      --good:#15803d;
+      --warn:#b45309;
+      --danger:#b91c1c;
+      --border:#d8e0ea;
+      --ticker:#ffffff;
+      --shadow:0 10px 28px rgba(0,0,0,.08);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial,sans-serif;
+      background:linear-gradient(180deg,#f8fbff 0%,#eef4fb 100%);
+      color:var(--text);
+    }
+    .app{max-width:1260px;margin:0 auto;padding:18px}
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+    .title{font-size:24px;font-weight:700}
+    .subtitle{color:var(--muted);margin-top:4px;font-size:14px}
+    .controls{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(180px,1fr));
+      gap:10px;
+      margin-top:14px;
+      margin-bottom:14px;
+    }
+    @media (max-width:1000px){.controls{grid-template-columns:repeat(2,minmax(180px,1fr))}}
+    @media (max-width:640px){.controls{grid-template-columns:1fr}}
+    .card{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:12px}
+    .label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    select,input[type="range"]{width:100%}
+    .value{margin-top:6px;font-size:13px;font-weight:700}
+    .hint{margin-top:14px;color:var(--muted);line-height:1.6}
+    .start-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    button{
+      border:none;border-radius:12px;padding:12px 18px;font-size:15px;font-weight:700;cursor:pointer;
+      background:#e7eefb;color:#1e3a8a
+    }
+    button.primary{background:linear-gradient(180deg,var(--accent) 0%,var(--accent2) 100%);color:#fff}
+    button.warn{background:#fff3e8;color:var(--warn)}
+    button.danger{background:#feecec;color:var(--danger)}
+    .hidden{display:none !important}
+
+    #trainingScreen{
+      position:fixed; inset:0; background:linear-gradient(180deg,#f8fbff 0%,#eef4fb 100%);
+      z-index:1000; display:flex; flex-direction:column;
+    }
+    .train-top{
+      padding:10px 16px; display:flex; justify-content:space-between; align-items:center;
+      border-bottom:1px solid var(--border); background:rgba(255,255,255,.8); backdrop-filter: blur(6px);
+    }
+    .train-status{color:var(--muted); font-size:14px}
+    .ticker-holder{
+      flex:1 1 auto; display:flex; align-items:center; justify-content:center; padding:20px;
+    }
+    .ticker-wrap{
+      position:relative;
+      width:760px; max-width:100%;
+      height:220px;
+      background:var(--ticker);
+      border:1px solid var(--border);
+      border-radius:22px;
+      overflow:hidden;
+      box-shadow:var(--shadow);
+    }
+    .ticker-item{
+      position:absolute; top:50%; transform:translateY(-50%);
+      white-space:nowrap; user-select:none;
+    }
+    .emoji-item{font-size:72px; line-height:1}
+    .text-item{font-weight:800}
+    .bottom-panel{
+      padding:14px 16px 20px; background:rgba(255,255,255,.9); border-top:1px solid var(--border);
+    }
+    .choices{
+      display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px;
+    }
+    @media (max-width:900px){.choices{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    @media (max-width:640px){.choices{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    .choice-btn{
+      width:100%; min-height:76px; padding:10px 8px;
+      background:#eef4ff; color:#173b7a; border:1px solid #d4e3ff; border-radius:14px;
+      font-size:22px; font-weight:700; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; gap:8px; text-align:center;
+    }
+    .choice-btn.correct{background:#e8f7ec;color:#176534;border-color:#b7e3c2}
+    .choice-btn.wrong{background:#fdecec;color:#9f1d1d;border-color:#f5c2c2}
+    .summary{
+      margin-top:12px; background:#fbfdff; border:1px solid var(--border); border-radius:18px; padding:14px; line-height:1.7;
+    }
+    .summary-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+  </style>
+</head>
+<body>
+<div class="app" id="setupScreen">
+  <div class="panel">
+    <div class="title">אימון קריאה — טיקר מילים</div>
+    <div class="subtitle">קודם בוחרים את כל ההגדרות, ואז ב-Enter עוברים למסך אימון מלא. ניתן לבחור גם כתב רש״י. לתצוגה אידיאלית של כתב רש״י נדרש חיבור לאינטרנט כדי לטעון את הגופן. זמן החשיפה נשמר קבוע גם אם רוחב החלון משתנה.</div>
+
+    <div class="controls">
+      <div class="card">
+        <label class="label" for="activeCount">מספר מילים פעילות</label>
+        <select id="activeCount">
+          <option value="6">6</option><option value="7">7</option><option value="8" selected>8</option>
+          <option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+        </select>
+        <div class="value">מספר הכפתורים בתחתית</div>
+      </div>
+
+      <div class="card">
+        <label class="label" for="speedRange">זמן חשיפה של המילה בחלון</label>
+        <input id="speedRange" type="range" min="0" max="100" step="1" value="0" />
+        <label class="label" for="speedSecondsInput" style="margin-top:8px">זמן חשיפה (שניות)</label>
+        <input id="speedSecondsInput" type="number" min="0.5" max="10" step="0.1" value="10.0" />
+        <div class="value" id="speedValue">10.0 שנ׳ חשיפה</div>
+      </div>
+
+      <div class="card">
+        <label class="label" for="sessionRange">אורך סשן (שניות)</label>
+        <input id="sessionRange" type="range" min="30" max="180" step="10" value="60" />
+        <div class="value" id="sessionValue">60</div>
+      </div>
+
+      <div class="card">
+        <label class="label" for="windowRange">רוחב חלון הטיקר</label>
+        <input id="windowRange" type="range" min="320" max="1100" step="20" value="760" />
+        <div class="value" id="windowValue">760</div>
+      </div>
+
+      <div class="card">
+        <label class="label" for="displayMode">מה רץ בטיקר</label>
+        <select id="displayMode">
+          <option value="word" selected>מילים</option>
+          <option value="image">תמונות</option>
+        </select>
+        <div class="value">אם מילים בטיקר — תמונות בכפתורים, ולהפך</div>
+      </div>
+
+      <div class="card">
+        <label class="label" for="fontMode">מצב גופן</label>
+        <select id="fontMode">
+          <option value="fixed" selected>גופן קבוע</option>
+          <option value="random">גופן אקראי</option>
+        </select>
+        <div class="value">אפשר לקבע או לבחור כל פעם גופן אחר</div>
+      </div>
+
+      <div class="card">
+        <label class="label" for="fontFamily">גופן קבוע</label>
+        <select id="fontFamily">
+          <option>Arial</option><option>Tahoma</option><option>Verdana</option>
+          <option>Times New Roman</option><option>Courier New</option><option>David</option><option value="Rashi">כתב רש״י</option>
+        </select>
+        <div class="value">רלוונטי כשמצב גופן קבוע</div>
+      </div>
+
+      <div class="card">
+        <label class="label" for="fontSize">גודל גופן</label>
+        <input id="fontSize" type="range" min="28" max="84" step="2" value="42" />
+        <div class="value" id="fontSizeValue">42</div>
+      </div>
+    </div>
+
+    <div class="hint">
+      אחרי בחירת כל ההגדרות לחץ על <b>Enter</b> או על כפתור ההתחלה.
+      במסך האימון יופיע בטיקר <b>או מילה או תמונה</b>, ובכפתורים בתחתית יופיע <b>הסוג ההפוך</b>. זמן החשיפה הוא הפרמטר הראשי, והמהירות מחושבת אוטומטית לפי רוחב החלון ורוחב המילה.
+    </div>
+
+    <div class="start-row">
+      <button class="primary" id="launchBtn">התחל אימון</button>
+    </div>
+  </div>
+</div>
+
+<div id="trainingScreen" class="hidden">
+  <div class="train-top">
+    <div class="train-status" id="trainStatus">האימון פועל</div>
+    <div class="train-status" id="trainTime">זמן: 60</div>
+  </div>
+
+  <div class="ticker-holder">
+    <div class="ticker-wrap" id="tickerWrap">
+      <div id="tickerItem" class="ticker-item"></div>
+    </div>
+  </div>
+
+  <div class="bottom-panel">
+    <div class="choices" id="choices"></div>
+    <div id="summary" class="summary hidden"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const ITEMS = [
+    {word:"כלב", img:"🐶"}, {word:"חתול", img:"🐱"}, {word:"סוס", img:"🐴"}, {word:"פרה", img:"🐄"},
+    {word:"כבש", img:"🐑"}, {word:"עז", img:"🐐"}, {word:"חמור", img:"🫏"}, {word:"ברווז", img:"🦆"},
+    {word:"אווז", img:"🪿"}, {word:"ארנב", img:"🐰"}, {word:"יונה", img:"🕊️"}, {word:"זאב", img:"🐺"},
+    {word:"כיסא", img:"🪑"}, {word:"שולחן", img:"🪵"}, {word:"כוס", img:"🥛"}, {word:"צלחת", img:"🍽️"},
+    {word:"מיטה", img:"🛏️"}, {word:"ארון", img:"🗄️"}, {word:"מנורה", img:"💡"}, {word:"דלת", img:"🚪"},
+    {word:"חלון", img:"🪟"}, {word:"סיר", img:"🍲"}, {word:"מזלג", img:"🍴"}, {word:"ספר", img:"📘"},
+    {word:"מחברת", img:"📓"}, {word:"עיפרון", img:"✏️"}, {word:"מחק", img:"🩹"}, {word:"סרגל", img:"📏"},
+    {word:"תיק", img:"🎒"}, {word:"לוח", img:"🟫"}, {word:"עט", img:"🖊️"}, {word:"מספריים", img:"✂️"},
+    {word:"מכונית", img:"🚗"}, {word:"אוטובוס", img:"🚌"}, {word:"רכבת", img:"🚆"}, {word:"מטוס", img:"✈️"},
+    {word:"אופניים", img:"🚲"}, {word:"משאית", img:"🚚"}, {word:"סירה", img:"⛵"}, {word:"מונית", img:"🚕"}
+  ];
+  const fonts = ["Arial","Tahoma","Verdana","Times New Roman","Courier New","David"];
+
+  const els = {
+    setup: document.getElementById('setupScreen'),
+    training: document.getElementById('trainingScreen'),
+    activeCount: document.getElementById('activeCount'),
+    speedRange: document.getElementById('speedRange'),
+    speedSecondsInput: document.getElementById('speedSecondsInput'),
+    speedValue: document.getElementById('speedValue'),
+    sessionRange: document.getElementById('sessionRange'),
+    sessionValue: document.getElementById('sessionValue'),
+    windowRange: document.getElementById('windowRange'),
+    windowValue: document.getElementById('windowValue'),
+    displayMode: document.getElementById('displayMode'),
+    fontMode: document.getElementById('fontMode'),
+    fontFamily: document.getElementById('fontFamily'),
+    fontSize: document.getElementById('fontSize'),
+    fontSizeValue: document.getElementById('fontSizeValue'),
+    launchBtn: document.getElementById('launchBtn'),
+    tickerWrap: document.getElementById('tickerWrap'),
+    tickerItem: document.getElementById('tickerItem'),
+    choices: document.getElementById('choices'),
+    trainStatus: document.getElementById('trainStatus'),
+    trainTime: document.getElementById('trainTime'),
+    summary: document.getElementById('summary')
+  };
+
+  let state = {
+    running:false, items:[], current:null, currentStart:0, x:0, raf:null,
+    sessionStart:0, sessionLimitMs:60000, correct:0, wrong:0, reactionTimes:[],
+    lastWords: [],
+    wordHits: {}
+  };
+
+  function shuffle(arr){
+    const a=[...arr];
+    for(let i=a.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+
+  function clamp(v, min, max){
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function exposureSeconds(){
+    const raw = Number(els.speedSecondsInput.value);
+    return clamp(isNaN(raw) ? 10.0 : raw, 0.5, 10.0);
+  }
+
+  function sliderToSeconds(v){
+    // 0 -> 10.0 sec, 100 -> 0.5 sec
+    return 10.0 - (v / 100) * 9.5;
+  }
+
+  function secondsToSlider(sec){
+    return Math.round(((10.0 - sec) / 9.5) * 100);
+  }
+
+  function syncLabels(){
+    const sec = exposureSeconds();
+    els.speedValue.textContent = sec.toFixed(1) + ' שנ׳ חשיפה';
+    els.sessionValue.textContent = els.sessionRange.value;
+    els.windowValue.textContent = els.windowRange.value;
+    els.fontSizeValue.textContent = els.fontSize.value;
+  }
+
+  function buildActiveItems(){
+    const count = Number(els.activeCount.value);
+    state.items = shuffle(ITEMS).slice(0, count);
+    state.wordHits = {};
+    state.items.forEach(item => state.wordHits[item.word] = 0);
+    state.lastWords = [];
+  }
+
+  function availableItemsForNext(){
+    let pool = state.items.filter(item => (state.wordHits[item.word] || 0) < 3);
+
+    if (pool.length === 0) return [];
+
+    if (state.lastWords.length >= 2) {
+      const lastA = state.lastWords[state.lastWords.length - 1];
+      const lastB = state.lastWords[state.lastWords.length - 2];
+      if (lastA === lastB) {
+        const filtered = pool.filter(item => item.word !== lastA);
+        if (filtered.length > 0) pool = filtered;
+      }
+    }
+    return pool;
+  }
+
+  function removeCompletedWordButtons(){
+    [...els.choices.querySelectorAll('.choice-btn')].forEach(btn => {
+      const w = btn.dataset.word;
+      if ((state.wordHits[w] || 0) >= 3) {
+        btn.remove();
+      }
+    });
+  }
+
+  function currentFontFamily(){
+    if (els.fontMode.value === 'random') {
+      return fonts[Math.floor(Math.random()*fonts.length)];
+    }
+    if (els.fontFamily.value === 'Rashi') {
+      return '"Noto Rashi Hebrew", "Rashi Script", serif';
+    }
+    return els.fontFamily.value;
+  }
+
+  function setTickerWindow(){
+    els.tickerWrap.style.width = els.windowRange.value + 'px';
+  }
+
+  function renderChoices(){
+    els.choices.innerHTML = '';
+    const buttonMode = els.displayMode.value === 'word' ? 'image' : 'word';
+
+    state.items.forEach(item => {
+      if ((state.wordHits[item.word] || 0) >= 3) return;
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.dataset.word = item.word;
+      btn.innerHTML = buttonMode === 'word' ? item.word : `<span style="font-size:40px;line-height:1">${item.img}</span>`;
+      btn.addEventListener('click', () => handleChoice(item.word, btn));
+      els.choices.appendChild(btn);
+    });
+  }
+
+  function resetChoiceHighlights(){
+    [...els.choices.querySelectorAll('.choice-btn')].forEach(btn => btn.classList.remove('correct','wrong'));
+  }
+
+  function pickNext(){
+    const pool = availableItemsForNext();
+    if (pool.length === 0) {
+      stopTraining(true);
+      return;
+    }
+
+    state.current = pool[Math.floor(Math.random()*pool.length)];
+    state.currentStart = performance.now();
+    state.x = -140;
+
+    state.lastWords.push(state.current.word);
+    if (state.lastWords.length > 2) state.lastWords.shift();
+
+    const mode = els.displayMode.value;
+    const fontFamily = currentFontFamily();
+    const fontSize = Number(els.fontSize.value);
+
+    els.tickerItem.className = 'ticker-item ' + (mode === 'word' ? 'text-item' : 'emoji-item');
+    if (mode === 'word') {
+      els.tickerItem.textContent = state.current.word;
+      els.tickerItem.style.fontFamily = fontFamily;
+      els.tickerItem.style.fontSize = fontSize + 'px';
+      els.tickerItem.style.fontWeight = '800';
+    } else {
+      els.tickerItem.textContent = state.current.img;
+      els.tickerItem.style.fontSize = Math.max(52, fontSize + 18) + 'px';
+      els.tickerItem.style.fontFamily = 'Arial';
+      els.tickerItem.style.fontWeight = 'normal';
+    }
+    els.tickerItem.style.left = state.x + 'px';
+  }
+
+  function handleChoice(word, btn){
+    if (!state.running || !state.current) return;
+    resetChoiceHighlights();
+    const reaction = Math.round(performance.now() - state.currentStart);
+
+    if (word === state.current.word) {
+      btn.classList.add('correct');
+      state.correct += 1;
+      state.reactionTimes.push(reaction);
+      state.wordHits[word] = (state.wordHits[word] || 0) + 1;
+
+      if (state.wordHits[word] >= 3) {
+        els.trainStatus.textContent = `נכון: ${word} | הושלם 3 פעמים ולכן הוסר מהאימון`;
+        removeCompletedWordButtons();
+      } else {
+        els.trainStatus.textContent = `נכון: ${word} | זמן תגובה ${reaction} מ״ש | הושלם ${state.wordHits[word]}/3`;
+      }
+
+      if (state.items.filter(item => (state.wordHits[item.word] || 0) < 3).length === 0) {
+        stopTraining(true);
+        return;
+      }
+
+      pickNext();
+    } else {
+      btn.classList.add('wrong');
+      state.wrong += 1;
+      els.trainStatus.textContent = `שגוי: נבחר "${word}" במקום "${state.current.word}"`;
+    }
+  }
+
+  function buildSummaryHtml(){
+    const avg = state.reactionTimes.length ? Math.round(state.reactionTimes.reduce((a,b)=>a+b,0)/state.reactionTimes.length) : 0;
+    const total = state.correct + state.wrong;
+    const acc = total ? ((state.correct/total)*100).toFixed(1) : '0.0';
+
+    return (
+      `<b>סיכום סשן</b><br>` +
+      `מילים פעילות: <b>${state.items.length}</b><br>` +
+      `נכון: <b>${state.correct}</b><br>` +
+      `שגוי: <b>${state.wrong}</b><br>` +
+      `ממוצע תגובה: <b>${avg}</b> מ״ש<br>` +
+      `אחוז הצלחה: <b>${acc}%</b><br>` +
+      `מילים שהושלמו והוסרו: <b>${Object.values(state.wordHits).filter(v => v >= 3).length}</b>` +
+      `<div class="summary-actions">` +
+      `<button class="primary" id="restartBtn">הפעל שוב</button>` +
+      `<button class="warn" id="backBtn">חזרה להגדרות</button>` +
+      `</div>`
+    );
+  }
+
+  function attachSummaryButtons(){
+    const restartBtn = document.getElementById('restartBtn');
+    const backBtn = document.getElementById('backBtn');
+    if (restartBtn) restartBtn.addEventListener('click', restartTraining);
+    if (backBtn) backBtn.addEventListener('click', exitTraining);
+  }
+
+  function showSummary(){
+    els.summary.innerHTML = buildSummaryHtml();
+    els.summary.classList.remove('hidden');
+    attachSummaryButtons();
+  }
+
+  function stopTraining(showSummaryAtEnd=false){
+    state.running = false;
+    if (state.raf) cancelAnimationFrame(state.raf);
+    state.raf = null;
+    if (showSummaryAtEnd) {
+      showSummary();
+      els.trainStatus.textContent = 'הסשן הסתיים.';
+    } else {
+      els.trainStatus.textContent = 'האימון נעצר.';
+    }
+  }
+
+  function loop(now){
+    if (!state.running) return;
+    const elapsed = now - state.sessionStart;
+    const remain = Math.max(0, Math.ceil((state.sessionLimitMs - elapsed)/1000));
+    els.trainTime.textContent = `זמן: ${remain}`;
+
+    if (elapsed >= state.sessionLimitMs){
+      stopTraining(true);
+      return;
+    }
+
+    const exposure = exposureSeconds();
+    const wordWidth = els.tickerItem.offsetWidth || 120;
+    const distance = els.tickerWrap.clientWidth + wordWidth;
+    const pixelsPerSecond = distance / Math.max(0.5, exposure);
+    const dt = 1000 / 60;
+    const speed = pixelsPerSecond * (dt / 1000);
+    state.x += speed;
+    els.tickerItem.style.left = state.x + 'px';
+
+    if (state.x > els.tickerWrap.clientWidth + 40) {
+      pickNext();
+    }
+
+    state.raf = requestAnimationFrame(loop);
+  }
+
+  async function launchTraining(){
+    buildActiveItems();
+    setTickerWindow();
+    renderChoices();
+
+    state.correct = 0;
+    state.wrong = 0;
+    state.reactionTimes = [];
+    state.wordHits = {};
+    state.lastWords = [];
+    state.sessionLimitMs = Math.max(30000, Number(els.sessionRange.value) * 1000);
+    state.sessionStart = performance.now();
+    state.running = true;
+    els.summary.classList.add('hidden');
+    resetChoiceHighlights();
+
+    els.setup.classList.add('hidden');
+    els.training.classList.remove('hidden');
+
+    if (document.documentElement.requestFullscreen) {
+      try { await document.documentElement.requestFullscreen(); } catch(e) {}
+    }
+
+    els.trainStatus.textContent = 'האימון פועל.';
+    pickNext();
+    state.raf = requestAnimationFrame(loop);
+  }
+
+  function restartTraining(){
+    state.correct = 0;
+    state.wrong = 0;
+    state.reactionTimes = [];
+    state.wordHits = {};
+    state.items.forEach(item => state.wordHits[item.word] = 0);
+    state.lastWords = [];
+    state.sessionLimitMs = Math.max(30000, Number(els.sessionRange.value) * 1000);
+    state.sessionStart = performance.now();
+    state.running = true;
+    els.summary.classList.add('hidden');
+    renderChoices();
+    resetChoiceHighlights();
+    els.trainStatus.textContent = 'האימון פועל מחדש.';
+    pickNext();
+    if (state.raf) cancelAnimationFrame(state.raf);
+    state.raf = requestAnimationFrame(loop);
+  }
+
+  function exitTraining(){
+    stopTraining(false);
+    els.training.classList.add('hidden');
+    els.setup.classList.remove('hidden');
+    els.summary.classList.add('hidden');
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  els.speedRange.addEventListener('input', () => {
+    const sec = sliderToSeconds(Number(els.speedRange.value));
+    els.speedSecondsInput.value = sec.toFixed(1);
+    syncLabels();
+  });
+  els.speedSecondsInput.addEventListener('input', () => {
+    let sec = clamp(Number(els.speedSecondsInput.value || 10), 0.5, 10.0);
+    els.speedSecondsInput.value = sec.toFixed(1);
+    els.speedRange.value = String(secondsToSlider(sec));
+    syncLabels();
+  });
+  els.sessionRange.addEventListener('input', syncLabels);
+  els.windowRange.addEventListener('input', () => { syncLabels(); setTickerWindow(); });
+  els.fontSize.addEventListener('input', syncLabels);
+
+  els.launchBtn.addEventListener('click', launchTraining);
+
+  window.addEventListener('keydown', (e) => {
+    if (!els.training.classList.contains('hidden')) {
+      if (e.code === 'Escape') {
+        e.preventDefault();
+        exitTraining();
+      }
+    } else {
+      if (e.code === 'Enter') {
+        e.preventDefault();
+        launchTraining();
+      }
+    }
+  });
+
+  els.speedSecondsInput.value = '10.0';
+  els.speedRange.value = String(secondsToSlider(10.0));
+  syncLabels();
+})();
+</script>
+</body>
+</html>

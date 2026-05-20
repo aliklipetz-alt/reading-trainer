@@ -3,203 +3,298 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>אימון מוטורי לקריאה</title>
+
+<title>Motor Training</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f3f6fb;
-  color: #111827;
+
+body{
+    margin:0;
+    background:#0f172a;
+    color:white;
+    font-family:Arial;
+    overflow:hidden;
 }
 
-header {
-  padding: 14px 22px;
-  background: #0f172a;
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.container{
+    width:100vw;
+    height:100vh;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    gap:30px;
 }
 
-header a {
-  color: white;
-  text-decoration: none;
+h1{
+    font-size:52px;
+    margin:0;
 }
 
-main {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 24px;
-  text-align: center;
+.subtitle{
+    opacity:0.7;
+    font-size:22px;
 }
 
-h1 {
-  font-size: 34px;
-  margin-bottom: 8px;
+#stage{
+    width:700px;
+    height:420px;
+
+    background:rgba(255,255,255,0.05);
+
+    border-radius:30px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    position:relative;
 }
 
-.subtitle {
-  color: #64748b;
-  margin-bottom: 20px;
+.figure{
+    position:relative;
+    width:220px;
+    height:300px;
 }
 
-.controls {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 24px;
+.line{
+    position:absolute;
+    background:white;
+    transform-origin:center;
+    border-radius:10px;
 }
 
-button {
-  border: none;
-  background: #2563eb;
-  color: white;
-  padding: 12px 18px;
-  border-radius: 12px;
-  font-size: 17px;
-  cursor: pointer;
+.controls{
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+    justify-content:center;
 }
 
-button.secondary {
-  background: #475569;
+button{
+    border:none;
+    border-radius:18px;
+
+    padding:16px 24px;
+
+    font-size:22px;
+    font-weight:bold;
+
+    cursor:pointer;
+
+    background:#2563eb;
+    color:white;
+
+    transition:0.2s;
 }
 
-.stage {
-  background: white;
-  border: 1px solid #dbe3ef;
-  border-radius: 24px;
-  min-height: 520px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
-  overflow: hidden;
+button:hover{
+    transform:scale(1.05);
 }
 
-.pose-title {
-  font-size: 26px;
-  font-weight: bold;
-  margin-top: 20px;
+.info{
+    opacity:0.75;
+    font-size:20px;
 }
 
-svg {
-  width: 420px;
-  height: 420px;
-  transform-origin: center;
-}
-
-.line {
-  stroke: #111827;
-  stroke-width: 14;
-  stroke-linecap: round;
-  fill: none;
-}
-
-.head {
-  fill: none;
-  stroke: #111827;
-  stroke-width: 12;
-}
-
-.hand-line {
-  stroke: #111827;
-  stroke-width: 16;
-  stroke-linecap: round;
-  fill: none;
-}
-
-.palm {
-  fill: #ffffff;
-  stroke: #111827;
-  stroke-width: 10;
-}
-
-.hint {
-  margin-top: 18px;
-  color: #64748b;
-  font-size: 15px;
-}
-
-@media (max-width: 700px) {
-  svg {
-    width: 320px;
-    height: 320px;
-  }
-
-  .stage {
-    min-height: 420px;
-  }
-}
 </style>
 </head>
 
 <body>
 
-<header>
-  <b>LexoraLab</b>
-  <a href="../cheder.html">חזרה / Back</a>
-</header>
+<div class="container">
 
-<main>
-  <h1>אימון מוטורי לקריאה</h1>
-  <div class="subtitle">Motor Reading Training</div>
+<h1>אימון מוטורי</h1>
+<div class="subtitle">Motor Training</div>
 
-  <div class="controls">
-    <button onclick="setMode('body')">גוף / Body</button>
-    <button onclick="setMode('hand')">יד / Hand</button>
-    <button class="secondary" onclick="prevPose()">← קודם</button>
-    <button class="secondary" onclick="nextPose()">הבא →</button>
-    <button class="secondary" onclick="randomPose()">אקראי</button>
-    <button class="secondary" onclick="zoomIn()">+</button>
-    <button class="secondary" onclick="zoomOut()">−</button>
-  </div>
+<div id="stage">
 
-  <div class="stage" id="stage"></div>
+<div class="figure" id="figure"></div>
 
-  <div class="pose-title" id="poseTitle"></div>
+</div>
 
-  <div class="hint">
-    חצים ימינה/שמאלה = מעבר בין תנוחות · + / - = שינוי גודל · רווח = תנוחה אקראית
-  </div>
-</main>
+<div class="controls">
+
+<button onclick="prevPose()">⬅ הקודם</button>
+
+<button onclick="nextPose()">הבא ➡</button>
+
+<button onclick="bigger()">＋ גדול</button>
+
+<button onclick="smaller()">－ קטן</button>
+
+<button onclick="switchMode()">החלף מצב</button>
+
+</div>
+
+<div class="info" id="info">
+מצב גוף
+</div>
+
+</div>
 
 <script>
-let mode = "body";
-let index = 0;
+
+const figure = document.getElementById("figure");
+const info = document.getElementById("info");
+
+let mode = 0;
+let poseIndex = 0;
 let scale = 1;
 
 const bodyPoses = [
-  {
-    title: "ידיים לצדדים",
-    svg: `
-    <svg viewBox="0 0 400 400">
-      <circle class="head" cx="200" cy="70" r="35"/>
-      <line class="line" x1="200" y1="110" x2="200" y2="230"/>
-      <line class="line" x1="90" y1="150" x2="310" y2="150"/>
-      <line class="line" x1="200" y1="230" x2="130" y2="340"/>
-      <line class="line" x1="200" y1="230" x2="270" y2="340"/>
-    </svg>`
-  },
-  {
-    title: "יד אחת למעלה יד אחת למטה",
-    svg: `
-    <svg viewBox="0 0 400 400">
-      <circle class="head" cx="200" cy="70" r="35"/>
-      <line class="line" x1="200" y1="110" x2="200" y2="230"/>
-      <line class="line" x1="200" y1="140" x2="120" y2="55"/>
-      <line class="line" x1="200" y1="150" x2="300" y2="255"/>
-      <line class="line" x1="200" y1="230" x2="140" y2="340"/>
-      <line class="line" x1="200" y1="230" x2="260" y2="340"/>
-    </svg>`
-  },
-  {
-    title: "שתי ידיים למעלה",
-    svg: `
-    <svg viewBox="0 0 400 400">
-      <circle class="head" cx="200" cy="78" r="35"/>
-      <line class="line" x1="200" y1="118" x2="200" y2="235"/>
-      <line class="line" x1="200" y1="140" x2="125" y2="45"/>
-      <line class="line" x1="200" y1="140" x2="275" y2="45"/>
-      <line class="line" x1="200" y1="235" x2="145" y2="345"/>
+
+"normal",
+"arms_up",
+"arms_side",
+"sit",
+"one_arm"
+
+];
+
+const handPoses = [
+
+"five",
+"two",
+"three",
+"one"
+
+];
+
+function drawBody(type){
+
+figure.innerHTML="";
+
+const head = createLine(80,10,60,60,0,true);
+head.style.borderRadius="50%";
+
+const body = createLine(105,70,10,100,0);
+
+const leftLeg = createLine(80,165,10,90,25);
+const rightLeg = createLine(120,165,10,90,-25);
+
+let leftArm;
+let rightArm;
+
+if(type==="normal"){
+
+leftArm=createLine(60,90,70,10,20);
+rightArm=createLine(90,90,70,10,-20);
+
+}
+
+if(type==="arms_up"){
+
+leftArm=createLine(55,70,80,10,-60);
+rightArm=createLine(85,70,80,10,60);
+
+}
+
+if(type==="arms_side"){
+
+leftArm=createLine(35,105,90,10,0);
+rightArm=createLine(95,105,90,10,0);
+
+}
+
+if(type==="sit"){
+
+leftArm=createLine(60,100,70,10,20);
+rightArm=createLine(90,100,70,10,-20);
+
+leftLeg.style.transform="rotate(90deg)";
+rightLeg.style.transform="rotate(90deg)";
+
+leftLeg.style.top="210px";
+rightLeg.style.top="230px";
+
+}
+
+if(type==="one_arm"){
+
+leftArm=createLine(60,90,70,10,-50);
+rightArm=createLine(90,90,70,10,-20);
+
+}
+
+figure.appendChild(head);
+figure.appendChild(body);
+figure.appendChild(leftLeg);
+figure.appendChild(rightLeg);
+
+figure.appendChild(leftArm);
+figure.appendChild(rightArm);
+
+}
+
+function drawHand(type){
+
+figure.innerHTML="";
+
+const palm = createLine(70,100,90,120,0,true);
+
+figure.appendChild(palm);
+
+function finger(x,y,r){
+
+const f=createLine(x,y,14,80,r,true);
+figure.appendChild(f);
+
+}
+
+if(type==="five"){
+
+finger(80,30,0);
+finger(100,20,0);
+finger(120,18,0);
+finger(140,25,0);
+finger(60,70,-45);
+
+}
+
+if(type==="two"){
+
+finger(95,25,0);
+finger(120,25,0);
+finger(60,70,-45);
+
+}
+
+if(type==="three"){
+
+finger(85,25,0);
+finger(110,20,0);
+finger(135,25,0);
+finger(60,70,-45);
+
+}
+
+if(type==="one"){
+
+finger(110,20,0);
+finger(60,70,-45);
+
+}
+
+}
+
+function createLine(x,y,w,h,r,outline=false){
+
+const el=document.createElement("div");
+
+el.className="line";
+
+el.style.left=x+"px";
+el.style.top=y+"px";
+
+el.style.width=w+"px";
+el.style.height=h+"px";
+
+el.style.transform=`rotate(${r}deg)`;
+
+if(outline){
+
+el.style.border="8px solid white";
+el.style.

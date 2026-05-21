@@ -2,108 +2,189 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>אימון מוטורי</title>
+
 <style>
-body{
-  margin:0;
-  background:#0f172a;
-  color:white;
-  font-family:Arial;
-  text-align:center;
+body {
+  margin: 0;
+  background: #0f172a;
+  color: white;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
 }
-h1{font-size:48px;margin-top:40px;}
-#stage{
-  height:420px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
+
+.container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
 }
-#shape{
-  font-size:180px;
-  transition:0.2s;
+
+h1 {
+  font-size: 48px;
+  margin: 0;
 }
-button{
-  background:#2563eb;
-  color:white;
-  border:none;
-  border-radius:14px;
-  padding:16px 24px;
-  margin:8px;
-  font-size:22px;
-  cursor:pointer;
+
+.subtitle {
+  opacity: 0.7;
+  font-size: 20px;
 }
-button:hover{background:#1d4ed8;}
-.info{margin-top:18px;font-size:22px;}
+
+.stage {
+  width: 70vw;
+  height: 55vh;
+  background: white;
+  border-radius: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#poseImage {
+  max-width: 80%;
+  max-height: 90%;
+  transform: scale(1);
+  transition: transform 0.2s ease;
+}
+
+.controls {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 22px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+.info {
+  font-size: 20px;
+  opacity: 0.85;
+}
+
+.hint {
+  font-size: 15px;
+  opacity: 0.55;
+}
 </style>
 </head>
 
 <body>
 
-<h1>אימון מוטורי</h1>
-<div>Motor Training</div>
+<div class="container">
 
-<div id="stage">
-  <div id="shape">🧍</div>
+  <h1>אימון מוטורי</h1>
+  <div class="subtitle">Motor Training</div>
+
+  <div class="stage">
+    <img id="poseImage" src="images/pose_1.png" alt="pose">
+  </div>
+
+  <div class="controls">
+    <button onclick="prevPose()">⬅ הקודם</button>
+    <button onclick="nextPose()">הבא ➡</button>
+    <button onclick="smaller()">⬇ קטן</button>
+    <button onclick="bigger()">⬆ גדול</button>
+  </div>
+
+  <div class="info" id="poseName">תנוחה 1</div>
+
+  <div class="hint">
+    חצים ימינה/שמאלה = החלפת תנוחה · חצים למעלה/למטה = שינוי גודל
+  </div>
+
 </div>
-
-<div>
-  <button onclick="prevPose()">⬅ הקודם</button>
-  <button onclick="nextPose()">הבא ➡</button>
-  <button onclick="bigger()">+ גדול</button>
-  <button onclick="smaller()">- קטן</button>
-  <button onclick="switchMode()">החלף מצב</button>
-</div>
-
-<div class="info" id="info">מצב גוף</div>
 
 <script>
-let mode = "body";
+const poses = [
+  {
+    name: "ידיים ורגליים פתוחות",
+    file: "images/pose_1.png"
+  },
+  {
+    name: "רגליים יחד ידיים למעלה",
+    file: "images/pose_2.png"
+  },
+  {
+    name: "יד ימין למעלה יד שמאל לצד",
+    file: "images/pose_3.png"
+  },
+  {
+    name: "יד שמאל למעלה יד ימין לצד",
+    file: "images/pose_4.png"
+  },
+  {
+    name: "ידיים למעלה רגליים פתוחות",
+    file: "images/pose_5.png"
+  },
+  {
+    name: "רגליים יחד ידיים למטה",
+    file: "images/pose_6.png"
+  },
+  {
+    name: "רגליים יחד ידיים למעלה",
+    file: "images/pose_7.png"
+  },
+  {
+    name: "תנועה מצד לצד",
+    file: "images/swing.gif"
+  }
+];
+
 let index = 0;
-let size = 180;
+let scale = 1;
 
-const body = ["🧍","🙆","🤸","🧎","🏃","🕺"];
-const hand = ["✋","☝️","✌️","🤟","👌","👍"];
+const img = document.getElementById("poseImage");
+const poseName = document.getElementById("poseName");
 
-function render(){
-  const list = mode === "body" ? body : hand;
-  document.getElementById("shape").textContent = list[index];
-  document.getElementById("shape").style.fontSize = size + "px";
-  document.getElementById("info").textContent = mode === "body" ? "מצב גוף" : "מצב יד";
+function render() {
+  img.src = poses[index].file;
+  img.style.transform = "scale(" + scale + ")";
+  poseName.textContent = poses[index].name;
 }
 
-function nextPose(){
-  const list = mode === "body" ? body : hand;
-  index = (index + 1) % list.length;
+function nextPose() {
+  index = (index + 1) % poses.length;
   render();
 }
 
-function prevPose(){
-  const list = mode === "body" ? body : hand;
-  index = (index - 1 + list.length) % list.length;
+function prevPose() {
+  index = (index - 1 + poses.length) % poses.length;
   render();
 }
 
-function bigger(){
-  size += 20;
+function bigger() {
+  scale += 0.1;
   render();
 }
 
-function smaller(){
-  size = Math.max(80, size - 20);
+function smaller() {
+  scale = Math.max(0.3, scale - 0.1);
   render();
 }
 
-function switchMode(){
-  mode = mode === "body" ? "hand" : "body";
-  index = 0;
-  render();
-}
-
-document.addEventListener("keydown", function(e){
-  if(e.key === "ArrowRight") nextPose();
-  if(e.key === "ArrowLeft") prevPose();
-  if(e.key === "+") bigger();
-  if(e.key === "-") smaller();
+document.addEventListener("keydown", function(e) {
+  if (e.key === "ArrowRight") nextPose();
+  if (e.key === "ArrowLeft") prevPose();
+  if (e.key === "ArrowUp") bigger();
+  if (e.key === "ArrowDown") smaller();
 });
 
 render();

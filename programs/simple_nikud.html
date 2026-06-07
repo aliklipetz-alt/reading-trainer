@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מאמן בחירת ניקוד במילה</title>
+<style>
+:root{
+  --panel:#fff;--text:#21314d;--muted:#66748e;--line:#dbe4f3;--accent:#4f7cff;
+  --good:#1fa66b;--bad:#d94e4e;--soft:#edf3ff;--shadow:0 12px 28px rgba(33,49,77,.10);
+  --radius:22px;--current-letter:#111;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#eef5ff,#fbfcff);color:var(--text)}
+.app{max-width:1180px;margin:0 auto;padding:18px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.top{padding:16px 18px;margin-bottom:16px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.title{font-size:26px;font-weight:900}.subtitle{font-size:14px;color:var(--muted);margin-top:4px}
+button,select,input{border:none;border-radius:14px;padding:10px 14px;font-size:16px;font-weight:700;background:var(--soft);color:var(--text)}
+button{cursor:pointer}button:hover{transform:translateY(-1px)}
+input[type=color]{padding:3px;width:70px;height:42px}input[type=range]{width:100%}
+.primary{background:var(--accent);color:#fff}.warn{background:var(--bad);color:#fff}.good{background:var(--good);color:#fff}
+.settings{padding:18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.field{border:1px solid var(--line);border-radius:18px;background:#fbfcff;padding:14px}
+.field label{display:block;font-weight:900;margin-bottom:8px}.field small{display:block;margin-top:6px;color:var(--muted);line-height:1.4}
+textarea{width:100%;min-height:240px;border:1px solid var(--line);border-radius:16px;padding:12px;font-size:22px;resize:vertical;direction:rtl;font-family:Arial,Helvetica,sans-serif}
+.wide{grid-column:1/-1}.actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:0 18px 18px}
+.contrast-row{display:flex;align-items:center;gap:12px}
+.contrast-preview{width:56px;height:56px;border:1px solid var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;flex:0 0 56px}
+.contrast-preview span{font-size:36px;font-weight:900;line-height:1}
+.game{display:none;padding:18px}.game.active{display:block}
+.hud{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.pill{background:#eef3ff;border-radius:999px;padding:9px 14px;font-weight:900;min-width:112px;text-align:center}
+.stage{min-height:280px;border:2px dashed var(--line);border-radius:22px;background:white;display:flex;align-items:center;justify-content:center;margin-bottom:18px;padding:18px}
+.word{font-weight:900;text-align:center;line-height:1.4;direction:rtl;unicode-bidi:isolate}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.answerBtn{min-height:110px;background:white;border:2px solid var(--line);border-radius:20px;box-shadow:var(--shadow);font-weight:900;line-height:1.35;direction:rtl;unicode-bidi:isolate}
+.answerBtn.correctFlash{background:#e6f8ef;border-color:#8ed9b2}.answerBtn.wrongFlash{background:#ffe4e4;border-color:#efa9a9}
+.feedback{min-height:34px;text-align:center;font-size:20px;font-weight:900;margin-bottom:10px}.feedback.good{color:var(--good)}.feedback.bad{color:var(--bad)}
+.gameActions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+.preview-note{font-size:24px;color:var(--muted);font-weight:900;text-align:center}
+.fileInputHidden{display:none}.fileBtn{display:inline-flex;align-items:center;justify-content:center;border-radius:14px;padding:10px 14px;background:var(--soft);font-weight:900;cursor:pointer}
+.fileStatus{color:var(--muted);font-size:14px;font-weight:800;margin-top:8px}
+.modal{display:none;position:fixed;inset:0;background:rgba(20,30,50,.45);align-items:center;justify-content:center;padding:20px;z-index:50}.modal.show{display:flex}
+.modalCard{max-width:760px;width:100%;background:white;border-radius:22px;padding:20px;box-shadow:var(--shadow)}
+.modalTitle{text-align:center;font-size:28px;font-weight:900;margin-bottom:14px}
+.results{display:grid;grid-template-columns:1fr 1fr;gap:10px}.result{border:1px solid var(--line);background:#fbfcff;border-radius:16px;padding:12px}
+.result .label{color:var(--muted);font-size:14px;margin-bottom:6px}.result .value{font-size:26px;font-weight:900}
+.errorTableWrap{margin-top:16px;max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:16px}
+.errorTable{width:100%;border-collapse:collapse;background:#fff;font-size:16px}.errorTable th,.errorTable td{border-bottom:1px solid var(--line);padding:10px;text-align:center}
+.errorTable th{background:#eef3ff;font-weight:900}.errorTable td{font-weight:700}.noErrors{text-align:center;color:var(--good);font-weight:900;padding:16px}
+.fullscreen .top,.fullscreen .hud,.fullscreen .gameActions{display:none}.fullscreen{max-width:none;width:100vw;min-height:100vh;padding:0}
+.fullscreen #gamePanel{border-radius:0;border:none;box-shadow:none;min-height:100vh;padding:18px}.fullscreen .stage{min-height:55vh;border:none;margin-bottom:20px}
+.fullscreen .answers{height:35vh;align-items:stretch}.fullscreen .answerBtn{min-height:0}
+@media(max-width:900px){.settings{grid-template-columns:1fr}.answers{grid-template-columns:1fr}.answerBtn{min-height:82px}.results{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="app" class="app">
+  <div class="panel top">
+    <div>
+      <div class="title">מאמן בחירת ניקוד במילה</div>
+      <div class="subtitle">המילים חוזרות בסבבים עד סוף הזמן. Escape חוזר לתפריט.</div>
+    </div>
+    <button id="settingsBtn">הגדרות</button>
+  </div>
+
+  <div id="settingsPanel" class="panel">
+    <div class="settings">
+      <div class="field"><label>משך סשן</label><select id="sessionTime"><option value="30">30 שניות</option><option value="60" selected>60 שניות</option><option value="120">120 שניות</option><option value="180">180 שניות</option><option value="300">300 שניות</option></select></div>
+      <div class="field"><label>זמן חשיפה</label><select id="exposureTime"><option value="500">0.5 שנ׳</option><option value="800">0.8 שנ׳</option><option value="1000" selected>1.0 שנ׳</option><option value="1500">1.5 שנ׳</option><option value="2000">2.0 שנ׳</option><option value="3000">3.0 שנ׳</option></select></div>
+      <div class="field"><label>מספר מילים בסבב</label><select id="taskCount"><option value="5">5</option><option value="10" selected>10</option><option value="15">15</option><option value="20">20</option><option value="999">כל הרשימה</option></select></div>
+      <div class="field"><label>אורך מילים</label><select id="lengthMode"><option value="all" selected>כל האורכים</option><option value="short">קצרות: עד 3 אותיות</option><option value="medium">בינוניות: 4-5 אותיות</option><option value="long">ארוכות: 6+ אותיות</option></select></div>
+      <div class="field"><label>גודל פונט</label><select id="fontSize"><option value="54">קטן</option><option value="74" selected>בינוני</option><option value="96">גדול</option><option value="116">גדול מאוד</option></select></div>
+      <div class="field"><label>פונט</label><select id="fontFamily"><option value="Arial, sans-serif" selected>Arial</option><option value="'Times New Roman', serif">Times New Roman</option><option value="David, Arial, sans-serif">David</option></select></div>
+      <div class="field"><label>צבע רקע</label><input type="color" id="bgColor" value="#ffffff"></div>
+      <div class="field"><label>צבע אותיות</label><input type="color" id="letterColor" value="#111111"></div>
+      <div class="field"><label>צבע ניקוד</label><input type="color" id="nikudColor" value="#d00000"><small>הדגש מוצג יחד עם האות כדי שיישאר במרכז האות.</small></div>
+      <div class="field">
+        <label>קונטרסט</label>
+        <div class="contrast-row"><input type="range" id="contrast" min="0" max="100" value="100"><div id="contrastPreview" class="contrast-preview"><span id="contrastPreviewText">ב</span></div></div>
+        <small>0 = כמעט אין הבדל בין האות לרקע. 100 = הקונטרסט המלא של הצבעים שנבחרו.</small>
+      </div>
+      <div class="field"><label>סדר מילים</label><select id="orderMode"><option value="random" selected>אקראי</option><option value="list">לפי הרשימה</option></select></div>
+      <div class="field"><label>מסך מלא</label><button id="fullscreenBtn" type="button">F / מסך מלא</button><small>אפשר ללחוץ F בזמן התרגול.</small></div>
+
+      <div class="field wide">
+        <label>טעינת טקסט מנוקד מקובץ</label>
+        <input id="textFileInput" class="fileInputHidden" type="file" accept=".txt,text/plain">
+        <label for="textFileInput" class="fileBtn">בחר קובץ טקסט</label>
+        <div id="fileStatus" class="fileStatus">לא נבחר קובץ</div>
+        <small>אפשר לבחור קובץ TXT בעברית עם ניקוד. התוכנית תפרק אותו למילים.</small>
+      </div>
+
+      <div class="field wide">
+        <label>רשימת מילים או טקסט עברי מנוקד</label>
+        <textarea id="wordList">בָּצָל
+חָתוּל
+כֶּלֶב
+דָּג
+סֵפֶר
+עִפָּרוֹן
+מַחְבֶּרֶת
+כּוֹס
+צַלַּחַת
+מַזְלֵג
+אוֹטוֹ
+מָטוֹס
+רַכֶּבֶת
+שָׁלוֹם
+מֶלֶךְ
+יֶלֶד
+יַלְדָּה
+בַּיִת
+שֶׁמֶשׁ
+יָרֵחַ</textarea>
+        <small>אפשר להדביק כאן טקסט שלם עם ניקוד. התוכנית מפרקת למילים ומחזירה את אותו סט בסבבים עד סוף הזמן.</small>
+      </div>
+    </div>
+    <div class="actions"><button id="startBtn" class="primary" type="button">התחל</button><button id="splitTextBtn" type="button">פרק טקסט למילים</button><button id="demoBtn" type="button">טען דוגמאות</button></div>
+  </div>
+
+  <div id="gamePanel" class="panel game">
+    <div class="hud"><div class="pill">זמן: <span id="timerText">0 שנ׳</span></div><div class="pill">סבב: <span id="roundText">1</span></div><div class="pill">נכון: <span id="correctText">0</span></div><div class="pill">טעויות: <span id="wrongText">0</span></div><div class="pill">דיוק: <span id="accuracyText">100%</span></div></div>
+    <div id="stage" class="stage"><div id="wordDisplay" class="word"></div></div>
+    <div id="feedback" class="feedback"></div>
+    <div id="answers" class="answers"></div>
+    <div class="gameActions"><button id="skipBtn" type="button">דלג</button><button id="endBtn" class="warn" type="button">סיים</button></div>
+  </div>
+</div>
+
+<div id="modal" class="modal"><div class="modalCard"><div class="modalTitle">הסשן הסתיים</div><div class="results">
+<div class="result"><div class="label">תשובות נכונות</div><div class="value" id="finalCorrect">0</div></div>
+<div class="result"><div class="label">טעויות</div><div class="value" id="finalWrong">0</div></div>
+<div class="result"><div class="label">דיוק</div><div class="value" id="finalAccuracy">100%</div></div>
+<div class="result"><div class="label">דילוגים</div><div class="value" id="finalSkipped">0</div></div>
+<div class="result"><div class="label">משימות שבוצעו</div><div class="value" id="finalTotal">0</div></div>
+<div class="result"><div class="label">זמן כולל</div><div class="value" id="finalTime">0 שנ׳</div></div>
+<div class="result"><div class="label">מספר סבבים</div><div class="value" id="finalRounds">1</div></div>
+</div><div id="errorTableContainer" class="errorTableWrap"></div><div class="actions" style="padding-top:16px"><button id="againBtn" class="primary" type="button">סשן חדש</button><button id="closeBtn" type="button">סגור</button></div></div></div>
+
+<script>
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const els = {
+  app:$('app'),settingsPanel:$('settingsPanel'),gamePanel:$('gamePanel'),settingsBtn:$('settingsBtn'),
+  startBtn:$('startBtn'),splitTextBtn:$('splitTextBtn'),demoBtn:$('demoBtn'),fullscreenBtn:$('fullscreenBtn'),
+  sessionTime:$('sessionTime'),exposureTime:$('exposureTime'),taskCount:$('taskCount'),lengthMode:$('lengthMode'),
+  fontSize:$('fontSize'),fontFamily:$('fontFamily'),bgColor:$('bgColor'),letterColor:$('letterColor'),nikudColor:$('nikudColor'),
+  contrast:$('contrast'),orderMode:$('orderMode'),textFileInput:$('textFileInput'),fileStatus:$('fileStatus'),wordList:$('wordList'),
+  timerText:$('timerText'),roundText:$('roundText'),correctText:$('correctText'),wrongText:$('wrongText'),accuracyText:$('accuracyText'),
+  stage:$('stage'),wordDisplay:$('wordDisplay'),feedback:$('feedback'),answers:$('answers'),skipBtn:$('skipBtn'),endBtn:$('endBtn'),
+  modal:$('modal'),finalCorrect:$('finalCorrect'),finalWrong:$('finalWrong'),finalAccuracy:$('finalAccuracy'),finalSkipped:$('finalSkipped'),
+  finalTotal:$('finalTotal'),finalTime:$('finalTime'),finalRounds:$('finalRounds'),againBtn:$('againBtn'),closeBtn:$('closeBtn'),
+  errorTableContainer:$('errorTableContainer'),contrastPreview:$('contrastPreview'),contrastPreviewText:$('contrastPreviewText')
+};
+
+const HEBREW_LETTER=/[\u05D0-\u05EA]/;
+const VOWELS=['ָ','ַ','ֶ','ֵ','ִ','ֹ','ֻ','ְ'];
+let words=[],sessionWords=[],queue=[],current=null,roundNumber=1;
+let running=false,answering=false,exposureTimer=null,sessionTimer=null,sessionStarted=0,sessionMs=0;
+const stats={correct:0,wrong:0,presses:0,skipped:0};
+let errorLog=[];
+
+function normalize(x){return (x||'').trim().replace(/\s+/g,'')}
+function stripMarks(t){return (t||'').replace(/[\u0591-\u05C7]/g,'')}
+function unitsFromWord(word){const units=[];let u='';for(const ch of Array.from(word)){if(HEBREW_LETTER.test(ch)){if(u)units.push(u);u=ch}else if(/[\u0591-\u05C7]/.test(ch)&&u){u+=ch}}if(u)units.push(u);return units}
+function plainLength(w){return unitsFromWord(w).length}
+function shuffle(a){const arr=[...a];for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
+
+function wordsFromTeacherText(text){
+  const cleaned=(text||'').replace(/[^\u0591-\u05C7\u05D0-\u05EA\s־-]/g,' ').replace(/[־-]/g,' ').replace(/\s+/g,' ').trim();
+  const raw=cleaned.split(' ').map(normalize).filter(Boolean);
+  const seen=new Set(), result=[];
+  for(const w of raw){if(!/[\u05D0-\u05EA]/.test(w))continue;if(unitsFromWord(w).length===0)continue;if(!seen.has(w)){seen.add(w);result.push(w)}}
+  return result;
+}
+function parseWords(){
+  let arr=wordsFromTeacherText(els.wordList.value);
+  const m=els.lengthMode.value;
+  if(m==='short')arr=arr.filter(w=>plainLength(w)<=3);
+  if(m==='medium')arr=arr.filter(w=>plainLength(w)>=4&&plainLength(w)<=5);
+  if(m==='long')arr=arr.filter(w=>plainLength(w)>=6);
+  words=arr.map(w=>({word:w,plain:stripMarks(w),units:unitsFromWord(w)}));
+}
+function buildQueue(){
+  parseWords();
+  let arr=els.orderMode.value==='random'?shuffle(words):[...words];
+  const c=Number(els.taskCount.value);
+  if(c!==999)arr=arr.slice(0,c);
+  sessionWords=arr;
+  queue=[...sessionWords];
+  roundNumber=1;
+}
+function hexToRgb(hex){const h=(hex||'#000000').replace('#','');return{r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),b:parseInt(h.slice(4,6),16)}}
+function rgbToHex(c){const h=v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0');return '#'+h(c.r)+h(c.g)+h(c.b)}
+function mix(a,b,t){return{r:a.r+(b.r-a.r)*t,g:a.g+(b.g-a.g)*t,b:a.b+(b.b-a.b)*t}}
+function effectiveLetterColor(){return rgbToHex(mix(hexToRgb(els.bgColor.value),hexToRgb(els.letterColor.value),Number(els.contrast.value)/100))}
+function updateContrastPreview(){els.contrastPreview.style.background=els.bgColor.value;els.contrastPreviewText.style.color=effectiveLetterColor();els.contrastPreviewText.style.fontFamily=els.fontFamily.value;els.contrastPreviewText.textContent='ב'}
+function applyVisuals(){document.documentElement.style.setProperty('--current-letter',effectiveLetterColor());els.stage.style.background=els.bgColor.value;els.wordDisplay.style.fontFamily=els.fontFamily.value;els.wordDisplay.style.fontSize=els.fontSize.value+'px'}
+
+function variantForUnit(unit){const letter=stripMarks(unit)[0]||'';if(!letter)return unit;const hasDagesh=unit.includes('ּ');const base=letter+(hasDagesh?'ּ':'');let candidate=base+VOWELS[Math.floor(Math.random()*VOWELS.length)],tries=0;while(candidate===unit&&tries<20){candidate=base+VOWELS[Math.floor(Math.random()*VOWELS.length)];tries++}return candidate}
+function makeWrongWord(obj){const u=[...obj.units];const indexes=shuffle(u.map((_,i)=>i)).slice(0,Math.max(1,Math.ceil(u.length/2)));indexes.forEach(i=>u[i]=variantForUnit(u[i]));const w=u.join('');return w===obj.word?obj.plain:w}
+function makeOptions(obj){const set=new Set([obj.word]);let guard=0;while(set.size<4&&guard<120){set.add(makeWrongWord(obj));guard++}while(set.size<4)set.add(obj.plain);return shuffle([...set]).map(w=>({word:w,correct:w===obj.word}))}
+function renderWordHTML(word){
+  return unitsFromWord(word).map(unit=>{
+    const letterMatch = unit.match(/[\u05D0-\u05EA]/);
+    const letter = letterMatch ? letterMatch[0] : '';
+
+    // U+05BC is dagesh / mappiq / shuruk dot.
+    // It must be rendered together with the letter, not in the overlay,
+    // otherwise it can move to the edge of the letter.
+    const dagesh = unit.includes('\u05BC') ? '\u05BC' : '';
+    const base = letter + dagesh;
+
+    // Other niqqud marks stay in the colored overlay.
+    const marks = unit
+      .replace(/[\u05D0-\u05EA]/g,'')
+      .replace(/\u05BC/g,'');
+
+    return `<span style="position:relative;display:inline-block;margin:0 .035em;">
+      <span style="color:var(--current-letter);">${base}</span>
+      <span style="color:${els.nikudColor.value};position:absolute;inset:0;text-align:center;pointer-events:none;">${marks}</span>
+    </span>`;
+  }).join('');
+}
+
+function showExposure(){answering=false;els.answers.innerHTML='';els.feedback.textContent='';applyVisuals();els.wordDisplay.innerHTML=renderWordHTML(current.word);clearTimeout(exposureTimer);exposureTimer=setTimeout(showAnswers,Number(els.exposureTime.value))}
+function showAnswers(){answering=true;els.wordDisplay.innerHTML='<div class="preview-note">בחר את המילה עם הניקוד הנכון</div>';els.answers.innerHTML='';makeOptions(current).forEach(opt=>{const b=document.createElement('button');b.type='button';b.className='answerBtn';b.innerHTML=renderWordHTML(opt.word);b.style.fontFamily=els.fontFamily.value;b.style.fontSize=Math.max(28,Number(els.fontSize.value)*0.55)+'px';b.addEventListener('click',()=>chooseAnswer(b,opt.correct,opt.word));els.answers.appendChild(b)})}
+function chooseAnswer(btn,ok,selectedWord){if(!running||!answering)return;answering=false;stats.presses++;if(ok){stats.correct++;btn.classList.add('correctFlash');els.feedback.textContent='נכון';els.feedback.className='feedback good'}else{stats.wrong++;errorLog.push({correct:current?current.word:'',selected:selectedWord||''});btn.classList.add('wrongFlash');els.feedback.textContent='טעות';els.feedback.className='feedback bad'}updateHud();setTimeout(nextTask,650)}
+function nextTask(){if(!running)return;if(queue.length===0){if(sessionWords.length===0){endSession();return}roundNumber++;queue=els.orderMode.value==='random'?shuffle(sessionWords):[...sessionWords]}current=queue.shift();showExposure();updateHud()}
+function updateHud(){els.roundText.textContent=roundNumber;els.correctText.textContent=stats.correct;els.wrongText.textContent=stats.wrong;els.accuracyText.textContent=(stats.presses?Math.round(stats.correct/stats.presses*100):100)+'%'}
+function resetStats(){stats.correct=0;stats.wrong=0;stats.presses=0;stats.skipped=0;errorLog=[]}
+async function enterFullscreen(){els.app.classList.add('fullscreen');try{if(document.documentElement.requestFullscreen&&!document.fullscreenElement)await document.documentElement.requestFullscreen()}catch(e){}}
+function exitFullscreenVisual(){els.app.classList.remove('fullscreen');try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}}
+function toggleFullscreen(){if(els.app.classList.contains('fullscreen'))exitFullscreenVisual();else enterFullscreen()}
+function startSession(){
+  buildQueue();
+  if(sessionWords.length===0){alert('אין מילים מתאימות לרשימה או לאורך שנבחר.');return}
+  resetStats();running=true;answering=false;sessionMs=Number(els.sessionTime.value)*1000;sessionStarted=Date.now();
+  els.settingsPanel.style.display='none';els.gamePanel.classList.add('active');els.modal.classList.remove('show');enterFullscreen();
+  clearInterval(sessionTimer);sessionTimer=setInterval(()=>{const r=Math.max(0,sessionMs-(Date.now()-sessionStarted));els.timerText.textContent=Math.ceil(r/1000)+' שנ׳';if(r<=0)endSession()},100);
+  updateHud();nextTask();
+}
+function renderErrorTable(){if(errorLog.length===0){els.errorTableContainer.innerHTML='<div class="noErrors">לא היו טעויות במילים</div>';return}const m=new Map();errorLog.forEach(e=>{const k=e.correct+'||'+e.selected;if(!m.has(k))m.set(k,{correct:e.correct,selected:e.selected,count:0});m.get(k).count++});const rows=Array.from(m.values()).map((e,i)=>`<tr><td>${i+1}</td><td>${e.correct}</td><td>${e.selected}</td><td>${e.count}</td></tr>`).join('');els.errorTableContainer.innerHTML=`<table class="errorTable"><thead><tr><th>#</th><th>המילה הנכונה</th><th>מה נבחר בטעות</th><th>מספר טעויות</th></tr></thead><tbody>${rows}</tbody></table>`}
+function endSession(){if(!running)return;running=false;answering=false;clearTimeout(exposureTimer);clearInterval(sessionTimer);const elapsed=Math.round((Date.now()-sessionStarted)/1000);const acc=stats.presses?Math.round(stats.correct/stats.presses*100):100;els.finalCorrect.textContent=stats.correct;els.finalWrong.textContent=stats.wrong;els.finalAccuracy.textContent=acc+'%';els.finalSkipped.textContent=stats.skipped;els.finalTotal.textContent=stats.presses;els.finalTime.textContent=elapsed+' שנ׳';els.finalRounds.textContent=roundNumber;renderErrorTable();els.modal.classList.add('show')}
+function escapeToMenu(){running=false;answering=false;clearTimeout(exposureTimer);clearInterval(sessionTimer);exitFullscreenVisual();els.modal.classList.remove('show');els.gamePanel.classList.remove('active');els.settingsPanel.style.display='block'}
+function skipTask(){if(!running)return;stats.skipped++;nextTask()}
+function splitTextBoxIntoWords(){const arr=wordsFromTeacherText(els.wordList.value);if(arr.length===0){alert('לא נמצאו מילים עבריות תקינות בטקסט.');return}els.wordList.value=arr.join('\n');alert('הטקסט פורק ל-'+arr.length+' מילים.')}
+function loadTextFile(file){if(!file)return;const reader=new FileReader();reader.onload=()=>{const arr=wordsFromTeacherText(String(reader.result||''));if(arr.length===0){els.fileStatus.textContent='לא נמצאו מילים עבריות בקובץ';return}els.wordList.value=arr.join('\n');els.fileStatus.textContent='נטענו '+arr.length+' מילים מהקובץ'};reader.onerror=()=>{els.fileStatus.textContent='שגיאה בקריאת הקובץ'};reader.readAsText(file,'UTF-8')}
+function loadDemo(){els.wordList.value=`בָּצָל
+חָתוּל
+כֶּלֶב
+דָּג
+סֵפֶר
+עִפָּרוֹן
+מַחְבֶּרֶת
+כּוֹס
+צַלַּחַת
+מַזְלֵג
+אוֹטוֹ
+מָטוֹס
+רַכֶּבֶת
+שָׁלוֹם
+מֶלֶךְ
+יֶלֶד
+יַלְדָּה
+בַּיִת
+שֶׁמֶשׁ
+יָרֵחַ`;alert('רשימת הדוגמאות נטענה.')}
+
+els.startBtn.addEventListener('click',startSession);
+els.splitTextBtn.addEventListener('click',splitTextBoxIntoWords);
+els.demoBtn.addEventListener('click',loadDemo);
+els.endBtn.addEventListener('click',endSession);
+els.skipBtn.addEventListener('click',skipTask);
+els.settingsBtn.addEventListener('click',escapeToMenu);
+els.fullscreenBtn.addEventListener('click',toggleFullscreen);
+els.againBtn.addEventListener('click',()=>{els.modal.classList.remove('show');startSession()});
+els.closeBtn.addEventListener('click',()=>els.modal.classList.remove('show'));
+els.textFileInput.addEventListener('change',e=>loadTextFile(e.target.files&&e.target.files[0]));
+[els.contrast,els.bgColor,els.letterColor,els.fontFamily].forEach(el=>{el.addEventListener('input',updateContrastPreview);el.addEventListener('change',updateContrastPreview)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')escapeToMenu();if(e.key.toLowerCase()==='f')toggleFullscreen()});
+updateContrastPreview();updateHud();
+})();
+</script>
+</body>
+</html>

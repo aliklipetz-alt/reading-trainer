@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>מאמן ניקוד - גרסה מתוקנת</title>
+<style>
+:root{
+  --bg:#f4f7ff;--panel:#fff;--text:#21314d;--muted:#66748e;--line:#dbe4f3;
+  --accent:#4f7cff;--good:#1fa66b;--bad:#d94e4e;--soft:#edf3ff;
+  --shadow:0 12px 28px rgba(33,49,77,.10);--radius:22px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#eef5ff,#fbfcff);color:var(--text)}
+.app{max-width:1150px;margin:0 auto;padding:18px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.top{padding:16px 18px;margin-bottom:16px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.title{font-size:26px;font-weight:900}
+.subtitle{font-size:14px;color:var(--muted);margin-top:4px}
+button,select,input{border:none;border-radius:14px;padding:10px 14px;font-size:16px;font-weight:700;background:var(--soft);color:var(--text)}
+button{cursor:pointer} button:hover{transform:translateY(-1px)}
+.primary{background:var(--accent);color:#fff}.warn{background:var(--bad);color:#fff}.good{background:var(--good);color:#fff}
+.settings{padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{border:1px solid var(--line);border-radius:18px;background:#fbfcff;padding:14px}
+.field label{display:block;font-weight:900;margin-bottom:8px}
+.field small{display:block;margin-top:6px;color:var(--muted);line-height:1.4}
+textarea{width:100%;min-height:260px;border:1px solid var(--line);border-radius:16px;padding:12px;font-size:22px;resize:vertical;direction:rtl;font-family:Arial,Helvetica,sans-serif}
+.wide{grid-column:1/-1}
+.actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:0 18px 18px}
+.game{display:none;padding:18px}.game.active{display:block}
+.hud{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.pill{background:#eef3ff;border-radius:999px;padding:9px 14px;font-weight:900;min-width:120px;text-align:center}
+.stage{min-height:220px;border:2px dashed var(--line);border-radius:22px;background:white;display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+#wordDisplay{font-weight:900;text-align:center;line-height:1.25}
+.hiddenHint{font-size:24px;color:var(--muted);font-weight:900;text-align:center}
+.answer{min-height:88px;display:flex;flex-direction:row-reverse;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;padding:14px;border:1px solid var(--line);border-radius:18px;background:#fbfcff;margin-bottom:14px}
+.slot{width:72px;height:80px;border:2px solid var(--line);border-radius:16px;background:white;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:900;position:relative}
+.slot.filled{border-color:#91aefe;background:#f4f7ff}
+.slot.active::after{content:"";position:absolute;bottom:8px;width:22px;height:4px;border-radius:999px;background:var(--accent)}
+.feedback{min-height:34px;text-align:center;font-size:20px;font-weight:900;margin-bottom:10px}
+.feedback.good{color:var(--good)}.feedback.bad{color:var(--bad)}
+.keyboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:12px}
+.key{min-height:82px;background:white;border:2px solid var(--line);border-radius:18px;font-size:40px;box-shadow:var(--shadow);font-family:inherit}
+.key.used{opacity:.35;cursor:default}.key.wrong{background:#ffe3e3;border-color:#efaaaa}
+.gameActions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+.modal{display:none;position:fixed;inset:0;background:rgba(20,30,50,.45);align-items:center;justify-content:center;padding:20px;z-index:50}
+.modal.show{display:flex}
+.modalCard{max-width:620px;width:100%;background:white;border-radius:22px;padding:20px;box-shadow:var(--shadow)}
+.modalTitle{text-align:center;font-size:28px;font-weight:900;margin-bottom:14px}
+.results{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.result{border:1px solid var(--line);background:#fbfcff;border-radius:16px;padding:12px}
+.result .label{color:var(--muted);font-size:14px;margin-bottom:6px}.result .value{font-size:26px;font-weight:900}
+@media(max-width:850px){.settings{grid-template-columns:1fr}.slot{width:58px;height:68px;font-size:34px}.key{font-size:34px;min-height:70px}.results{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="panel top">
+    <div>
+      <div class="title">מאמן ניקוד</div>
+      <div class="subtitle">מילה אחת בלבד בכל פעם → נעלמת → בחירת האותיות עם הניקוד הנכון</div>
+    </div>
+    <button id="settingsBtn">הגדרות</button>
+  </div>
+
+  <div id="settingsPanel" class="panel">
+    <div class="settings">
+      <div class="field">
+        <label>משך סשן</label>
+        <select id="sessionTime">
+          <option value="30">30 שניות</option>
+          <option value="60" selected>60 שניות</option>
+          <option value="120">120 שניות</option>
+          <option value="180">180 שניות</option>
+          <option value="300">300 שניות</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>מספר מילים בסשן</label>
+        <select id="wordCount">
+          <option value="5">5 מילים</option>
+          <option value="10" selected>10 מילים</option>
+          <option value="15">15 מילים</option>
+          <option value="20">20 מילים</option>
+          <option value="999">כל הרשימה</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>גודל פונט</label>
+        <select id="fontSize">
+          <option value="54">קטן</option>
+          <option value="72" selected>בינוני</option>
+          <option value="92">גדול</option>
+          <option value="112">גדול מאוד</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>פונט</label>
+        <select id="fontFamily">
+          <option value="Arial, sans-serif" selected>Arial</option>
+          <option value="'Times New Roman', serif">Times New Roman</option>
+          <option value="David, Arial, sans-serif">David</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>זמן הצגת המילה</label>
+        <select id="previewTime">
+          <option value="700">0.7 שנ׳</option>
+          <option value="1000" selected>1.0 שנ׳</option>
+          <option value="1500">1.5 שנ׳</option>
+          <option value="2000">2.0 שנ׳</option>
+          <option value="3000">3.0 שנ׳</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>הצגת המילה בהתחלה</label>
+        <select id="showMode">
+          <option value="with" selected>עם ניקוד</option>
+          <option value="without">בלי ניקוד</option>
+        </select>
+        <small>גם אם המילה מוצגת בלי ניקוד, התשובה תמיד צריכה להיות עם הניקוד הנכון.</small>
+      </div>
+      <div class="field">
+        <label>מספר אפשרויות לכל אות</label>
+        <select id="variantsPerLetter">
+          <option value="2">2 אפשרויות לכל אות</option>
+          <option value="3" selected>3 אפשרויות לכל אות</option>
+          <option value="4">4 אפשרויות לכל אות</option>
+        </select>
+        <small>לדוגמה: מילה בת 3 אותיות + 3 אפשרויות לכל אות = 9 כפתורים.</small>
+      </div>
+      <div class="field">
+        <label>סדר מילים</label>
+        <select id="orderMode">
+          <option value="random" selected>אקראי</option>
+          <option value="list">לפי הרשימה</option>
+        </select>
+      </div>
+      <div class="field wide">
+        <label>רשימת מילים של המורה</label>
+        <textarea id="wordList">בָּצָל
+חָתוּל
+כֶּלֶב
+דָּג
+סֵפֶר
+עִפָּרוֹן
+מַחְבֶּרֶת
+כּוֹס
+צַלַּחַת
+מַזְלֵג
+אוֹטוֹ
+מָטוֹס
+רַכֶּבֶת
+שָׁלוֹם
+מֶלֶךְ
+יֶלֶד
+יַלְדָּה
+בַּיִת
+שֶׁמֶשׁ
+יָרֵחַ</textarea>
+        <small>כל שורה היא מילה אחת. חשוב להקליד את המילה עם הניקוד הנכון.</small>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="startBtn" class="primary">התחל סשן</button>
+      <button id="demoBtn">טען דוגמאות</button>
+    </div>
+  </div>
+
+  <div id="gamePanel" class="panel game">
+    <div class="hud">
+      <div class="pill">זמן: <span id="timerText">0 שנ׳</span></div>
+      <div class="pill">מילים: <span id="doneText">0</span></div>
+      <div class="pill">טעויות: <span id="mistakesText">0</span></div>
+      <div class="pill">דיוק: <span id="accuracyText">100%</span></div>
+    </div>
+
+    <div class="stage">
+      <div id="wordDisplay"></div>
+    </div>
+
+    <div id="answerRow" class="answer"></div>
+    <div id="feedback" class="feedback"></div>
+    <div id="keyboard" class="keyboard"></div>
+
+    <div class="gameActions">
+      <button id="skipBtn">דלג למילה הבאה</button>
+      <button id="endBtn" class="warn">סיים סשן</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal" class="modal">
+  <div class="modalCard">
+    <div class="modalTitle">הסשן הסתיים</div>
+    <div class="results">
+      <div class="result"><div class="label">מילים שהושלמו</div><div class="value" id="finalDone">0</div></div>
+      <div class="result"><div class="label">טעויות</div><div class="value" id="finalMistakes">0</div></div>
+      <div class="result"><div class="label">דיוק</div><div class="value" id="finalAccuracy">100%</div></div>
+      <div class="result"><div class="label">דילוגים</div><div class="value" id="finalSkipped">0</div></div>
+      <div class="result"><div class="label">לחיצות נכונות</div><div class="value" id="finalCorrect">0</div></div>
+      <div class="result"><div class="label">זמן כולל</div><div class="value" id="finalTime">0 שנ׳</div></div>
+    </div>
+    <div class="actions" style="padding-top:16px">
+      <button id="againBtn" class="primary">סשן חדש</button>
+      <button id="closeBtn">סגור</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const els = {
+  settingsPanel: document.getElementById('settingsPanel'),
+  gamePanel: document.getElementById('gamePanel'),
+  settingsBtn: document.getElementById('settingsBtn'),
+  sessionTime: document.getElementById('sessionTime'),
+  wordCount: document.getElementById('wordCount'),
+  fontSize: document.getElementById('fontSize'),
+  fontFamily: document.getElementById('fontFamily'),
+  previewTime: document.getElementById('previewTime'),
+  showMode: document.getElementById('showMode'),
+  variantsPerLetter: document.getElementById('variantsPerLetter'),
+  orderMode: document.getElementById('orderMode'),
+  wordList: document.getElementById('wordList'),
+  startBtn: document.getElementById('startBtn'),
+  demoBtn: document.getElementById('demoBtn'),
+  timerText: document.getElementById('timerText'),
+  doneText: document.getElementById('doneText'),
+  mistakesText: document.getElementById('mistakesText'),
+  accuracyText: document.getElementById('accuracyText'),
+  wordDisplay: document.getElementById('wordDisplay'),
+  answerRow: document.getElementById('answerRow'),
+  keyboard: document.getElementById('keyboard'),
+  feedback: document.getElementById('feedback'),
+  skipBtn: document.getElementById('skipBtn'),
+  endBtn: document.getElementById('endBtn'),
+  modal: document.getElementById('modal'),
+  finalDone: document.getElementById('finalDone'),
+  finalMistakes: document.getElementById('finalMistakes'),
+  finalAccuracy: document.getElementById('finalAccuracy'),
+  finalSkipped: document.getElementById('finalSkipped'),
+  finalCorrect: document.getElementById('finalCorrect'),
+  finalTime: document.getElementById('finalTime'),
+  againBtn: document.getElementById('againBtn'),
+  closeBtn: document.getElementById('closeBtn')
+};
+
+const HEBREW_LETTER = /[\u05D0-\u05EA]/;
+const MARK = /[\u0591-\u05C7]/;
+const VOWELS = ['ָ','ַ','ֶ','ֵ','ִ','ֹ','ֻ','ְ'];
+const LETTERS = 'אבגדהוזחטיכלמנסעפצקרשת'.split('');
+
+let words = [];
+let queue = [];
+let current = null;
+let currentPos = 0;
+let running = false;
+let waiting = false;
+let previewTimer = null;
+let sessionTimer = null;
+let sessionStarted = 0;
+let sessionMs = 0;
+
+const stats = {done:0,mistakes:0,correct:0,presses:0,skipped:0};
+
+function stripMarks(text){
+  return (text || '').replace(/[\u0591-\u05C7]/g,'');
+}
+
+function normalize(text){
+  return (text || '').trim().replace(/\s+/g,'');
+}
+
+function unitsFromWord(word){
+  // Strict manual parser: every unit starts with Hebrew letter and absorbs following niqqud marks.
+  const units = [];
+  let currentUnit = '';
+  for(const ch of Array.from(word)){
+    if(HEBREW_LETTER.test(ch)){
+      if(currentUnit) units.push(currentUnit);
+      currentUnit = ch;
+    } else if(MARK.test(ch)){
+      if(currentUnit) currentUnit += ch;
+    }
+  }
+  if(currentUnit) units.push(currentUnit);
+  return units.filter(u => stripMarks(u).length > 0);
+}
+
+function parseWords(){
+  const lines = els.wordList.value.split('\n').map(normalize).filter(Boolean);
+  words = lines.map(w => ({word:w, plain:stripMarks(w), units:unitsFromWord(w)}))
+               .filter(x => x.units.length > 0);
+}
+
+function shuffle(a){
+  const arr = [...a];
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function buildQueue(){
+  parseWords();
+  let arr = els.orderMode.value === 'random' ? shuffle(words) : [...words];
+  const count = Number(els.wordCount.value);
+  if(count !== 999) arr = arr.slice(0,count);
+  queue = arr;
+}
+
+function baseLetter(unit){
+  return stripMarks(unit)[0] || '';
+}
+
+function hasDagesh(unit){
+  return unit.includes('ּ');
+}
+
+function variantForUnit(unit, vowel){
+  const letter = baseLetter(unit);
+  if(!letter) return '';
+  let result = letter;
+  if(hasDagesh(unit)) result += 'ּ';
+  result += vowel;
+  return result;
+}
+
+function makeVariants(unit, count){
+  const correct = unit;
+  const variants = [correct];
+  const shuffledVowels = shuffle(VOWELS);
+  for(const v of shuffledVowels){
+    const candidate = variantForUnit(unit, v);
+    if(candidate && candidate !== correct && !variants.includes(candidate)){
+      variants.push(candidate);
+    }
+    if(variants.length >= count) break;
+  }
+
+  // If not enough variants, add same letter without vowel / other safe variants.
+  const bare = baseLetter(unit) + (hasDagesh(unit) ? 'ּ' : '');
+  if(variants.length < count && bare && !variants.includes(bare)) variants.push(bare);
+
+  while(variants.length < count){
+    const randomLetter = LETTERS[Math.floor(Math.random()*LETTERS.length)];
+    const randomVowel = VOWELS[Math.floor(Math.random()*VOWELS.length)];
+    const candidate = randomLetter + randomVowel;
+    if(candidate.trim() && !variants.includes(candidate)) variants.push(candidate);
+  }
+  return variants.slice(0,count);
+}
+
+function buildKeyboard(){
+  const count = Number(els.variantsPerLetter.value);
+  let all = [];
+  for(const unit of current.units){
+    all = all.concat(makeVariants(unit, count));
+  }
+  all = shuffle(all);
+  els.keyboard.innerHTML = '';
+  all.forEach(value => {
+    const btn = document.createElement('button');
+    btn.className = 'key';
+    btn.textContent = value;
+    btn.style.fontFamily = els.fontFamily.value;
+    btn.onclick = () => press(btn, value);
+    els.keyboard.appendChild(btn);
+  });
+}
+
+function renderSlots(){
+  els.answerRow.innerHTML = '';
+  for(let i=0;i<current.units.length;i++){
+    const s = document.createElement('div');
+    s.className = 'slot';
+    s.style.fontFamily = els.fontFamily.value;
+    els.answerRow.appendChild(s);
+  }
+  setActiveSlot();
+}
+
+function setActiveSlot(){
+  [...els.answerRow.children].forEach(s=>s.classList.remove('active'));
+  const idx = els.answerRow.children.length - 1 - currentPos;
+  if(els.answerRow.children[idx]) els.answerRow.children[idx].classList.add('active');
+}
+
+function showOneWord(){
+  waiting = true;
+  els.answerRow.innerHTML = '';
+  els.keyboard.innerHTML = '';
+  els.feedback.textContent = '';
+  const display = els.showMode.value === 'without' ? current.plain : current.word;
+  els.wordDisplay.textContent = display; // one word only
+  els.wordDisplay.style.fontSize = els.fontSize.value + 'px';
+  els.wordDisplay.style.fontFamily = els.fontFamily.value;
+
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => {
+    waiting = false;
+    els.wordDisplay.innerHTML = '<div class="hiddenHint">בחר את האותיות עם הניקוד הנכון</div>';
+    renderSlots();
+    buildKeyboard();
+  }, Number(els.previewTime.value));
+}
+
+function nextWord(skipped=false){
+  if(!running) return;
+  clearTimeout(previewTimer);
+  if(skipped && current) stats.skipped++;
+
+  if(queue.length === 0){
+    endSession();
+    return;
+  }
+  current = queue.shift();
+  currentPos = 0;
+  showOneWord();
+  updateHud();
+}
+
+function press(btn, value){
+  if(!running || waiting || !current) return;
+  if(btn.classList.contains('used')) return;
+
+  stats.presses++;
+  const expected = current.units[currentPos];
+
+  if(value === expected){
+    const idx = els.answerRow.children.length - 1 - currentPos;
+    els.answerRow.children[idx].textContent = value;
+    els.answerRow.children[idx].classList.add('filled');
+    btn.classList.add('used');
+    currentPos++;
+    stats.correct++;
+    els.feedback.textContent = 'נכון';
+    els.feedback.className = 'feedback good';
+    setActiveSlot();
+
+    if(currentPos >= current.units.length){
+      stats.done++;
+      updateHud();
+      els.feedback.textContent = 'כל הכבוד!';
+      setTimeout(()=>nextWord(false),650);
+      return;
+    }
+  } else {
+    stats.mistakes++;
+    btn.classList.add('wrong');
+    els.feedback.textContent = 'טעות - נסה שוב';
+    els.feedback.className = 'feedback bad';
+    setTimeout(()=>btn.classList.remove('wrong'),250);
+  }
+  updateHud();
+}
+
+function updateHud(){
+  els.doneText.textContent = stats.done;
+  els.mistakesText.textContent = stats.mistakes;
+  const acc = stats.presses ? Math.round(stats.correct/stats.presses*100) : 100;
+  els.accuracyText.textContent = acc + '%';
+}
+
+function resetStats(){
+  stats.done=0;stats.mistakes=0;stats.correct=0;stats.presses=0;stats.skipped=0;
+}
+
+function startSession(){
+  buildQueue();
+  if(queue.length === 0){
+    alert('אין מילים תקינות ברשימה.');
+    return;
+  }
+  resetStats();
+  running = true;
+  waiting = false;
+  sessionMs = Number(els.sessionTime.value)*1000;
+  sessionStarted = Date.now();
+  els.settingsPanel.style.display = 'none';
+  els.gamePanel.classList.add('active');
+  els.modal.classList.remove('show');
+
+  clearInterval(sessionTimer);
+  sessionTimer = setInterval(()=>{
+    const remain = Math.max(0, sessionMs - (Date.now()-sessionStarted));
+    els.timerText.textContent = Math.ceil(remain/1000) + ' שנ׳';
+    if(remain <= 0) endSession();
+  },100);
+
+  nextWord(false);
+}
+
+function endSession(){
+  if(!running) return;
+  running = false;
+  waiting = false;
+  clearTimeout(previewTimer);
+  clearInterval(sessionTimer);
+  const elapsed = Math.round((Date.now()-sessionStarted)/1000);
+  const acc = stats.presses ? Math.round(stats.correct/stats.presses*100) : 100;
+  els.finalDone.textContent = stats.done;
+  els.finalMistakes.textContent = stats.mistakes;
+  els.finalAccuracy.textContent = acc + '%';
+  els.finalSkipped.textContent = stats.skipped;
+  els.finalCorrect.textContent = stats.correct;
+  els.finalTime.textContent = elapsed + ' שנ׳';
+  els.modal.classList.add('show');
+}
+
+function goSettings(){
+  running = false;
+  waiting = false;
+  clearTimeout(previewTimer);
+  clearInterval(sessionTimer);
+  els.gamePanel.classList.remove('active');
+  els.settingsPanel.style.display = 'block';
+}
+
+function loadDemo(){
+  els.wordList.value = `בָּצָל
+חָתוּל
+כֶּלֶב
+דָּג
+סֵפֶר
+עִפָּרוֹן
+מַחְבֶּרֶת
+כּוֹס
+צַלַּחַת
+מַזְלֵג
+אוֹטוֹ
+מָטוֹס
+רַכֶּבֶת
+שָׁלוֹם
+מֶלֶךְ
+יֶלֶד
+יַלְדָּה
+בַּיִת
+שֶׁמֶשׁ
+יָרֵחַ`;
+  alert('נטענה רשימת דוגמאות.');
+}
+
+els.startBtn.onclick = startSession;
+els.skipBtn.onclick = () => nextWord(true);
+els.endBtn.onclick = endSession;
+els.settingsBtn.onclick = goSettings;
+els.demoBtn.onclick = loadDemo;
+els.againBtn.onclick = () => {els.modal.classList.remove('show');startSession();};
+els.closeBtn.onclick = () => els.modal.classList.remove('show');
+
+updateHud();
+</script>
+</body>
+</html>

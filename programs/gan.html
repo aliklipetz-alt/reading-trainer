@@ -10,13 +10,16 @@
 
 <header class="topbar">
   <b>LexoraLab</b>
-  <a href="dashboard.html" class="small-link">חזרה / Back</a>
+  <a href="dashboard.html" class="small-link">חזרה</a>
 </header>
 
 <div class="container">
 
   <h1>גן ילדים</h1>
-  <p class="en">Gan Yeladim Programs</p>
+
+  <div id="studentInfo"
+       style="font-size:20px; font-weight:bold; color:#004080; margin-bottom:20px;">
+  </div>
 
   <div class="programs">
 
@@ -25,24 +28,45 @@
       <span>Motor Training</span>
     </a>
 
-    <a href="#" class="program-button">
-      תוכנית 2
-      <span>Coming soon</span>
+    <a href="programs/word_picture.html" class="program-button">
+      מילה ותמונה
+      <span>Word & Picture</span>
     </a>
 
-    <a href="#" class="program-button">
-      תוכנית 3
-      <span>Coming soon</span>
+    <a href="programs/nikud_training.html" class="program-button">
+      אימון ניקוד
+      <span>Nikud Training</span>
     </a>
 
-    <a href="#" class="program-button">
-      תוכנית 4
-      <span>Coming soon</span>
+    <a href="programs/ticker_words.html" class="program-button">
+      טיקר מילים
+      <span>Reading Ticker</span>
     </a>
 
   </div>
 
 </div>
+
+<script>
+const studentName = localStorage.getItem("currentStudentName");
+const studentId = localStorage.getItem("currentStudentId");
+
+if (
+  !studentName ||
+  !studentId ||
+  studentName.trim() === "" ||
+  studentId.trim() === ""
+) {
+  window.location.href = "student.html";
+}
+
+const info = document.getElementById("studentInfo");
+
+if (info) {
+  info.innerHTML =
+    "תלמיד: " + studentName + " | מזהה: " + studentId;
+}
+</script>
 
 </body>
 </html>

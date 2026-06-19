@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>בחירת תלמיד</title>
+<link rel="stylesheet" href="style.css">
+
+<style>
+.student-box{
+    max-width:700px;
+    margin:40px auto;
+    text-align:center;
+}
+
+.student-list{
+    margin-top:20px;
+}
+
+.student-btn{
+    display:block;
+    width:100%;
+    margin:10px 0;
+    padding:15px;
+    font-size:22px;
+    cursor:pointer;
+}
+
+.new-student{
+    margin-top:25px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container student-box">
+
+<h1>בחירת תלמיד</h1>
+
+<div id="studentList" class="student-list"></div>
+
+<div class="new-student">
+<input id="newStudentName"
+       type="text"
+       placeholder="שם תלמיד חדש">
+
+<button onclick="addStudent()">
+הוסף תלמיד
+</button>
+</div>
+
+</div>
+
+<script>
+
+function getStudents(){
+    return JSON.parse(
+      localStorage.getItem("lexoraStudents") || "[]"
+    );
+}
+
+function saveStudents(list){
+    localStorage.setItem(
+      "lexoraStudents",
+      JSON.stringify(list)
+    );
+}
+
+function selectStudent(name){
+    localStorage.setItem(
+      "currentStudent",
+      name
+    );
+
+    window.location.href =
+      "dashboard.html";
+}
+
+function renderStudents(){
+
+    const container =
+      document.getElementById("studentList");
+
+    container.innerHTML = "";
+
+    const students = getStudents();
+
+    students.forEach(name => {
+
+        const btn =
+          document.createElement("button");
+
+        btn.className =
+          "student-btn";
+
+        btn.textContent =
+          name;
+
+        btn.onclick =
+          () => selectStudent(name);
+
+        container.appendChild(btn);
+
+    });
+}
+
+function addStudent(){
+
+    const input =
+      document.getElementById("newStudentName");
+
+    const name =
+      input.value.trim();
+
+    if(!name) return;
+
+    const students =
+      getStudents();
+
+    if(!students.includes(name)){
+        students.push(name);
+        saveStudents(students);
+    }
+
+    selectStudent(name);
+}
+
+renderStudents();
+
+</script>
+
+</body>
+</html>

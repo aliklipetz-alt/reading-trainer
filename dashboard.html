@@ -62,12 +62,11 @@ if (student) {
         "תלמיד נוכחי: " + student;
 }
 </script>
-  <script>
-const student = localStorage.getItem("currentStudent");
+<script>
+const student = localStorage.getItem("currentStudentName");
 
-if (student) {
-  document.getElementById("studentInfo").innerHTML =
-    "תלמיד נוכחי: " + student;
+if(!student || student.trim() === ""){
+    window.location.href = "student.html";
 }
 </script>
 </body>

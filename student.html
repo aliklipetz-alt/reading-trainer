@@ -8,28 +8,38 @@
 
 <style>
 .student-box{
-    max-width:800px;
-    margin:30px auto;
-    text-align:center;
+  max-width:1000px;
+  margin:30px auto;
+  text-align:center;
 }
 
 input{
-    width:90%;
-    padding:12px;
-    margin:8px;
-    font-size:18px;
+  width:90%;
+  padding:12px;
+  margin:8px;
+  font-size:18px;
 }
 
-.student-item{
-    border:1px solid #ccc;
-    margin:5px;
-    padding:10px;
-    cursor:pointer;
-    border-radius:8px;
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+  background:white;
 }
 
-.student-item:hover{
-    background:#f0f0f0;
+th,td{
+  border:1px solid #ccc;
+  padding:10px;
+  text-align:center;
+}
+
+th{
+  background:#eeeeee;
+}
+
+.action-btn{
+  padding:8px 14px;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -44,17 +54,23 @@ input{
        placeholder="חיפוש לפי שם או טלפון"
        oninput="renderStudents()">
 
-<div id="studentList"></div>
+<table>
+<thead>
+<tr>
+<th>שם תלמיד</th>
+<th>טלפון / מזהה</th>
+<th>פעולה</th>
+</tr>
+</thead>
+<tbody id="studentTable"></tbody>
+</table>
 
 <hr>
 
 <h2>תלמיד חדש</h2>
 
-<input id="newName"
-       placeholder="שם תלמיד">
-
-<input id="newId"
-       placeholder="טלפון / מזהה">
+<input id="newName" placeholder="שם תלמיד">
+<input id="newId" placeholder="טלפון / מזהה">
 
 <button onclick="addStudent()">
 הוסף תלמיד חדש
@@ -65,120 +81,71 @@ input{
 <script>
 
 function getStudents(){
-    return JSON.parse(
-        localStorage.getItem("lexoraStudents") || "[]"
-    );
+  return JSON.parse(localStorage.getItem("lexoraStudents") || "[]");
 }
 
 function saveStudents(list){
-    localStorage.setItem(
-        "lexoraStudents",
-        JSON.stringify(list)
-    );
+  localStorage.setItem("lexoraStudents", JSON.stringify(list));
 }
 
 function selectStudent(student){
-
-    localStorage.setItem(
-        "currentStudentName",
-        student.name
-    );
-
-    localStorage.setItem(
-        "currentStudentId",
-        student.id
-    );
-
-    localStorage.setItem(
-        "currentStudent",
-        student.name
-    );
-
-    window.location.href =
-        "dashboard.html";
+  localStorage.setItem("currentStudentName", student.name);
+  localStorage.setItem("currentStudentId", student.id);
+  localStorage.setItem("currentStudent", student.name);
+  window.location.href = "dashboard.html";
 }
 
 function renderStudents(){
+  const filter = document.getElementById("searchBox").value.toLowerCase();
+  const tbody = document.getElementById("studentTable");
+  tbody.innerHTML = "";
 
-    const filter =
-        document.getElementById("searchBox")
-        .value
-        .toLowerCase();
-
-    const container =
-        document.getElementById("studentList");
-
-    container.innerHTML = "";
-
-    const students = getStudents();
-
-    students
+  getStudents()
     .filter(s =>
-        s.name.toLowerCase().includes(filter)
-        ||
-        s.id.includes(filter)
+      s.name.toLowerCase().includes(filter) ||
+      s.id.toLowerCase().includes(filter)
     )
     .forEach(student => {
+      const row = document.createElement("tr");
 
-        const div =
-            document.createElement("div");
+      row.innerHTML = `
+        <td>${student.name}</td>
+        <td>${student.id}</td>
+        <td>
+          <button class="action-btn">בחר</button>
+        </td>
+      `;
 
-        div.className =
-            "student-item";
+      row.querySelector("button").onclick =
+        () => selectStudent(student);
 
-        div.innerHTML =
-            "<b>" + student.name + "</b><br>"
-            + student.id;
-
-        div.onclick =
-            () => selectStudent(student);
-
-        container.appendChild(div);
-
+      tbody.appendChild(row);
     });
 }
 
 function addStudent(){
+  const name = document.getElementById("newName").value.trim();
+  const id = document.getElementById("newId").value.trim();
 
-    const name =
-        document.getElementById("newName")
-        .value.trim();
+  if(!name || !id){
+    alert("יש למלא שם ומספר טלפון");
+    return;
+  }
 
-    const id =
-        document.getElementById("newId")
-        .value.trim();
+  const students = getStudents();
+  const existing = students.find(s => s.id === id);
 
-    if(!name || !id){
-        alert("יש למלא שם ומספר טלפון");
-        return;
-    }
+  if(existing){
+    alert("התלמיד כבר קיים במערכת");
+    selectStudent(existing);
+    return;
+  }
 
-    const students =
-        getStudents();
+  const student = { name, id };
 
-    const existing =
-        students.find(s => s.id === id);
-
-    if(existing){
-
-        alert(
-            "התלמיד כבר קיים במערכת"
-        );
-
-        selectStudent(existing);
-        return;
-    }
-
-    const student = {
-        name,
-        id
-    };
-
-    students.push(student);
-
-    saveStudents(students);
-
-    selectStudent(student);
+  students.push(student);
+  saveStudents(students);
+  selectStudent(student);
 }
 
 renderStudents();

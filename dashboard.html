@@ -16,6 +16,12 @@
 <div class="container">
 
   <h1>בחר חדר אימון</h1>
+  <div id="studentInfo"
+     style="font-size:20px;
+            font-weight:bold;
+            color:#004080;
+            margin-bottom:20px;">
+</div>
   <p class="en">Choose a training room</p>
 
   <div class="rooms-grid">
@@ -43,6 +49,13 @@
   </div>
 
 </div>
+<script>
+const student = localStorage.getItem("currentStudent");
 
+if (student) {
+    document.getElementById("studentInfo").innerHTML =
+        "תלמיד נוכחי: " + student;
+}
+</script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -10,7 +11,21 @@
 
 <header class="topbar">
   <b>LexoraLab</b>
-  <a href="index.html" class="small-link">בית / Home</a>
+
+  <div>
+    <a href="student.html" class="small-link">
+      החלפת תלמיד
+    </a>
+
+```
+&nbsp;&nbsp;
+
+<a href="index.html" class="small-link">
+  בית
+</a>
+```
+
+  </div>
 </header>
 
 <div class="container">
@@ -18,60 +33,73 @@
   <h1>בחר חדר אימון</h1>
 
   <div id="currentStudentInfo"
-       style="font-size:22px;
-              font-weight:bold;
-              margin-bottom:20px;
-              color:white;">
+       style="
+       font-size:22px;
+       font-weight:bold;
+       margin-bottom:20px;
+       color:white;">
   </div>
 
   <p class="en">Choose a training room</p>
 
   <div class="rooms-grid">
 
-    <a href="statistics.html" class="room-button">
-      📊 סטטיסטיקה
-      <span>נתוני תלמידים</span>
-    </a>
+```
+<a href="statistics.html" class="room-button">
+  📊 סטטיסטיקה
+  <span>נתוני תלמידים</span>
+</a>
 
-    <a href="programs/motor_training.html" class="room-button">
-      גן ילדים
-      <span>Gan Yeladim</span>
-    </a>
+<a href="gan.html" class="room-button">
+  גן ילדים
+  <span>Gan Yeladim</span>
+</a>
 
-    <a href="cheder.html" class="room-button">
-      חדר
-      <span>Cheder</span>
-    </a>
+<a href="cheder.html" class="room-button">
+  חדר
+  <span>Cheder</span>
+</a>
 
-    <a href="#" class="room-button">
-      ישיבה קטנה
-      <span>Yeshiva Ketana</span>
-    </a>
+<a href="#" class="room-button">
+  ישיבה קטנה
+  <span>Yeshiva Ketana</span>
+</a>
 
-    <a href="yeshiva-gedola.html" class="room-button">
-      ישיבה גדולה
-      <span>Yeshiva Gedola</span>
-    </a>
+<a href="yeshiva-gedola.html" class="room-button">
+  ישיבה גדולה
+  <span>Yeshiva Gedola</span>
+</a>
+```
 
   </div>
 
 </div>
 
 <script>
-const studentName = localStorage.getItem("currentStudentName");
-const studentId = localStorage.getItem("currentStudentId");
 
-if (
+const studentName =
+  localStorage.getItem("currentStudentName");
+
+const studentId =
+  localStorage.getItem("currentStudentId");
+
+if(
   !studentName ||
   !studentId ||
   studentName.trim() === "" ||
   studentId.trim() === ""
-) {
+){
   window.location.href = "student.html";
 }
 
-document.getElementById("currentStudentInfo").innerHTML =
-  "תלמיד נוכחי: " + studentName + " | " + studentId;
+document.getElementById(
+  "currentStudentInfo"
+).innerHTML =
+  "תלמיד נוכחי: " +
+  studentName +
+  " | מזהה: " +
+  studentId;
+
 </script>
 
 </body>

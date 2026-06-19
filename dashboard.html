@@ -16,6 +16,8 @@
 <div class="container">
 
   <h1>בחר חדר אימון</h1>
+  <div id="studentInfo" style="font-size:22px; font-weight:bold; margin-bottom:20px;">
+</div>
   <div id="studentInfo"
      style="font-size:20px;
             font-weight:bold;
@@ -25,7 +27,10 @@
   <p class="en">Choose a training room</p>
 
   <div class="rooms-grid">
-
+<a href="statistics.html" class="room-button">
+  📊 סטטיסטיקה
+  <span>נתוני תלמידים</span>
+</a>
     <a href="programs/motor_training.html" class="room-button">
       גן ילדים
       <span>Gan Yeladim</span>
@@ -55,6 +60,14 @@ const student = localStorage.getItem("currentStudent");
 if (student) {
     document.getElementById("studentInfo").innerHTML =
         "תלמיד נוכחי: " + student;
+}
+</script>
+  <script>
+const student = localStorage.getItem("currentStudent");
+
+if (student) {
+  document.getElementById("studentInfo").innerHTML =
+    "תלמיד נוכחי: " + student;
 }
 </script>
 </body>

@@ -1,12 +1,67 @@
-<script>
-function login() {
-  const password = document.getElementById("password").value;
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
 
-  if (password === "1234") {
-    localStorage.setItem("lexoraLoggedIn", "yes");
-    window.location.href = "student.html";
-  } else {
-    document.getElementById("error").style.display = "block";
-  }
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - LexoraLab</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="login-box">
+
+        <h2>כניסה למערכת</h2>
+
+        <input
+            type="password"
+            id="password"
+            placeholder="סיסמה">
+
+        <button onclick="login()">
+            כניסה
+        </button>
+
+        <p id="error"
+           style="display:none;color:red;">
+            סיסמה שגויה
+        </p>
+
+    </div>
+
+</div>
+
+<script>
+
+function login() {
+
+    const password =
+        document.getElementById("password").value;
+
+    if (password === "1234") {
+
+        localStorage.setItem(
+            "lexoraLoggedIn",
+            "yes"
+        );
+
+        window.location.href =
+            "student.html";
+
+    }
+    else {
+
+        document.getElementById("error")
+            .style.display = "block";
+
+    }
+
 }
+
 </script>
+
+</body>
+</html>

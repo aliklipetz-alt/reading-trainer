@@ -4,74 +4,94 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>בחירת תלמיד</title>
+
 <link rel="stylesheet" href="style.css">
 
 <style>
 .student-box{
-  max-width:1000px;
-  margin:30px auto;
-  text-align:center;
+    max-width:1000px;
+    margin:30px auto;
+    text-align:center;
 }
 
 input{
-  width:90%;
-  padding:12px;
-  margin:8px;
-  font-size:18px;
+    width:90%;
+    padding:12px;
+    margin:8px;
+    font-size:18px;
 }
 
 table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:20px;
-  background:white;
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+    background:white;
 }
 
 th,td{
-  border:1px solid #ccc;
-  padding:10px;
-  text-align:center;
-}
-
-th{
-  background:#eeeeee;
+    border:1px solid #ccc;
+    padding:10px;
+    text-align:center;
 }
 
 .action-btn{
-  padding:8px 14px;
-  cursor:pointer;
+    padding:8px 14px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    color:white;
+}
+
+.select-btn{
+    background:#1976d2;
+}
+
+.delete-btn{
+    background:#c62828;
 }
 </style>
-</head>
 
+</head>
 <body>
 
 <div class="container student-box">
 
 <h1>בחירת תלמיד</h1>
 
-<input id="searchBox"
-       placeholder="חיפוש לפי שם או טלפון"
-       autocomplete="off"
-       oninput="renderStudents()">
+<input
+id="searchBox"
+type="text"
+autocomplete="off"
+placeholder="חיפוש לפי שם או טלפון"
+oninput="renderStudents()">
 
 <table>
 <thead>
 <tr>
 <th>שם תלמיד</th>
 <th>טלפון / מזהה</th>
-<th>פעולה</th>
+<th>פעולות</th>
 </tr>
 </thead>
-<tbody id="studentTable"></tbody>
+
+<tbody id="studentTable">
+</tbody>
+
 </table>
 
-<hr>
+<h2 style="margin-top:40px;">תלמיד חדש</h2>
 
-<h2>תלמיד חדש</h2>
+<input
+id="newName"
+type="text"
+autocomplete="off"
+placeholder="שם תלמיד">
 
-<input id="newName" placeholder="שם תלמיד">
-<input id="newId" placeholder="טלפון / מזהה">
+<input
+id="newPhone"
+type="text"
+autocomplete="off"
+placeholder="טלפון / מזהה">
 
 <button onclick="addStudent()">
 הוסף תלמיד חדש
@@ -82,71 +102,167 @@ th{
 <script>
 
 function getStudents(){
-  return JSON.parse(localStorage.getItem("lexoraStudents") || "[]");
+    return JSON.parse(
+        localStorage.getItem("students") || "[]"
+    );
 }
 
 function saveStudents(list){
-  localStorage.setItem("lexoraStudents", JSON.stringify(list));
-}
-
-function selectStudent(student){
-  localStorage.setItem("currentStudentName", student.name);
-  localStorage.setItem("currentStudentId", student.id);
-  localStorage.setItem("currentStudent", student.name);
-  window.location.href = "dashboard.html";
+    localStorage.setItem(
+        "students",
+        JSON.stringify(list)
+    );
 }
 
 function renderStudents(){
-  const filter = document.getElementById("searchBox").value.toLowerCase();
-  const tbody = document.getElementById("studentTable");
-  tbody.innerHTML = "";
 
-  getStudents()
-    .filter(s =>
-      s.name.toLowerCase().includes(filter) ||
-      s.id.toLowerCase().includes(filter)
-    )
-    .forEach(student => {
-      const row = document.createElement("tr");
+    const search =
+        document.getElementById("searchBox")
+        .value
+        .toLowerCase();
 
-      row.innerHTML = `
-        <td>${student.name}</td>
-        <td>${student.id}</td>
-        <td>
-          <button class="action-btn">בחר</button>
-        </td>
-      `;
+    const students = getStudents();
 
-      row.querySelector("button").onclick =
-        () => selectStudent(student);
+    const filtered =
+        students.filter(s =>
+            s.name.toLowerCase().includes(search) ||
+            s.phone.includes(search)
+        );
 
-      tbody.appendChild(row);
+    const table =
+        document.getElementById("studentTable");
+
+    table.innerHTML = "";
+
+    filtered.forEach(student => {
+
+        table.innerHTML += `
+        <tr>
+            <td>${student.name}</td>
+            <td>${student.phone}</td>
+
+            <td>
+
+            <button
+            class="action-btn select-btn"
+            onclick="selectStudent('${student.phone}')">
+            בחר
+            </button>
+
+            <button
+            class="action-btn delete-btn"
+            onclick="deleteStudent('${student.phone}')">
+            מחק
+            </button>
+
+            </td>
+        </tr>
+        `;
     });
+
+}
+
+function selectStudent(phone){
+
+    const students = getStudents();
+
+    const student =
+        students.find(
+            s => s.phone === phone
+        );
+
+    if(!student) return;
+
+    localStorage.setItem(
+        "currentStudent",
+        student.name
+    );
+
+    localStorage.setItem(
+        "currentStudentId",
+        student.phone
+    );
+
+    window.location.href =
+        "dashboard.html";
 }
 
 function addStudent(){
-  const name = document.getElementById("newName").value.trim();
-  const id = document.getElementById("newId").value.trim();
 
-  if(!name || !id){
-    alert("יש למלא שם ומספר טלפון");
-    return;
-  }
+    const name =
+        document.getElementById("newName")
+        .value.trim();
 
-  const students = getStudents();
-  const existing = students.find(s => s.id === id);
+    const phone =
+        document.getElementById("newPhone")
+        .value.trim();
 
-  if(existing){
-    alert("התלמיד כבר קיים במערכת");
-    selectStudent(existing);
-    return;
-  }
+    if(!name || !phone){
+        alert("יש למלא את כל השדות");
+        return;
+    }
 
-  const student = { name, id };
+    const students = getStudents();
 
-  students.push(student);
-  saveStudents(students);
-  selectStudent(student);
+    const exists =
+        students.find(
+            s => s.phone === phone
+        );
+
+    if(exists){
+        alert("תלמיד כבר קיים");
+        return;
+    }
+
+    students.push({
+        name,
+        phone
+    });
+
+    saveStudents(students);
+
+    document.getElementById("newName").value="";
+    document.getElementById("newPhone").value="";
+
+    renderStudents();
+}
+
+function deleteStudent(phone){
+
+    const pass =
+        prompt("הכנס סיסמה למחיקה");
+
+    if(pass !== "1234"){
+        alert("סיסמה שגויה");
+        return;
+    }
+
+    let students = getStudents();
+
+    students =
+        students.filter(
+            s => s.phone !== phone
+        );
+
+    saveStudents(students);
+
+    let stats =
+        JSON.parse(
+            localStorage.getItem("lexoraStats")
+            || "[]"
+        );
+
+    stats =
+        stats.filter(
+            s => s.studentId !== phone
+        );
+
+    localStorage.setItem(
+        "lexoraStats",
+        JSON.stringify(stats)
+    );
+
+    renderStudents();
 }
 
 renderStudents();

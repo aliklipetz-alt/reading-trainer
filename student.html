@@ -8,26 +8,28 @@
 
 <style>
 .student-box{
-    max-width:700px;
-    margin:40px auto;
+    max-width:800px;
+    margin:30px auto;
     text-align:center;
 }
 
-.student-list{
-    margin-top:20px;
+input{
+    width:90%;
+    padding:12px;
+    margin:8px;
+    font-size:18px;
 }
 
-.student-btn{
-    display:block;
-    width:100%;
-    margin:10px 0;
-    padding:15px;
-    font-size:22px;
+.student-item{
+    border:1px solid #ccc;
+    margin:5px;
+    padding:10px;
     cursor:pointer;
+    border-radius:8px;
 }
 
-.new-student{
-    margin-top:25px;
+.student-item:hover{
+    background:#f0f0f0;
 }
 </style>
 </head>
@@ -38,17 +40,25 @@
 
 <h1>בחירת תלמיד</h1>
 
-<div id="studentList" class="student-list"></div>
+<input id="searchBox"
+       placeholder="חיפוש לפי שם או טלפון"
+       oninput="renderStudents()">
 
-<div class="new-student">
-<input id="newStudentName"
-       type="text"
-       placeholder="שם תלמיד חדש">
+<div id="studentList"></div>
+
+<hr>
+
+<h2>תלמיד חדש</h2>
+
+<input id="newName"
+       placeholder="שם תלמיד">
+
+<input id="newId"
+       placeholder="טלפון / מזהה">
 
 <button onclick="addStudent()">
-הוסף תלמיד
+הוסף תלמיד חדש
 </button>
-</div>
 
 </div>
 
@@ -56,74 +66,119 @@
 
 function getStudents(){
     return JSON.parse(
-      localStorage.getItem("lexoraStudents") || "[]"
+        localStorage.getItem("lexoraStudents") || "[]"
     );
 }
 
 function saveStudents(list){
     localStorage.setItem(
-      "lexoraStudents",
-      JSON.stringify(list)
+        "lexoraStudents",
+        JSON.stringify(list)
     );
 }
 
-function selectStudent(name){
+function selectStudent(student){
+
     localStorage.setItem(
-      "currentStudent",
-      name
+        "currentStudentName",
+        student.name
+    );
+
+    localStorage.setItem(
+        "currentStudentId",
+        student.id
+    );
+
+    localStorage.setItem(
+        "currentStudent",
+        student.name
     );
 
     window.location.href =
-      "dashboard.html";
+        "dashboard.html";
 }
 
 function renderStudents(){
 
+    const filter =
+        document.getElementById("searchBox")
+        .value
+        .toLowerCase();
+
     const container =
-      document.getElementById("studentList");
+        document.getElementById("studentList");
 
     container.innerHTML = "";
 
     const students = getStudents();
 
-    students.forEach(name => {
+    students
+    .filter(s =>
+        s.name.toLowerCase().includes(filter)
+        ||
+        s.id.includes(filter)
+    )
+    .forEach(student => {
 
-        const btn =
-          document.createElement("button");
+        const div =
+            document.createElement("div");
 
-        btn.className =
-          "student-btn";
+        div.className =
+            "student-item";
 
-        btn.textContent =
-          name;
+        div.innerHTML =
+            "<b>" + student.name + "</b><br>"
+            + student.id;
 
-        btn.onclick =
-          () => selectStudent(name);
+        div.onclick =
+            () => selectStudent(student);
 
-        container.appendChild(btn);
+        container.appendChild(div);
 
     });
 }
 
 function addStudent(){
 
-    const input =
-      document.getElementById("newStudentName");
-
     const name =
-      input.value.trim();
+        document.getElementById("newName")
+        .value.trim();
 
-    if(!name) return;
+    const id =
+        document.getElementById("newId")
+        .value.trim();
 
-    const students =
-      getStudents();
-
-    if(!students.includes(name)){
-        students.push(name);
-        saveStudents(students);
+    if(!name || !id){
+        alert("יש למלא שם ומספר טלפון");
+        return;
     }
 
-    selectStudent(name);
+    const students =
+        getStudents();
+
+    const existing =
+        students.find(s => s.id === id);
+
+    if(existing){
+
+        alert(
+            "התלמיד כבר קיים במערכת"
+        );
+
+        selectStudent(existing);
+        return;
+    }
+
+    const student = {
+        name,
+        id
+    };
+
+    students.push(student);
+
+    saveStudents(students);
+
+    selectStudent(student);
 }
 
 renderStudents();

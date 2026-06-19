@@ -8,7 +8,7 @@
 
 <style>
 .student-box{
-  max-width:900px;
+  max-width:950px;
   margin:30px auto;
   text-align:center;
 }
@@ -37,19 +37,26 @@ input{
   border:1px solid #ccc;
   border-radius:8px;
   z-index:20;
-  max-height:300px;
+  max-height:360px;
   overflow-y:auto;
   text-align:right;
+  box-shadow:0 8px 20px rgba(0,0,0,0.15);
 }
 
 .suggestion{
   padding:12px;
   border-bottom:1px solid #ddd;
-  cursor:pointer;
 }
 
-.suggestion:hover{
-  background:#e8f0ff;
+.student-line{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+}
+
+.student-main{
+  flex:1;
 }
 
 .small-phone{
@@ -58,12 +65,33 @@ input{
   margin-top:4px;
 }
 
+.action-group{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.action-btn{
+  padding:7px 10px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  color:white;
+  font-weight:bold;
+}
+
+.select-btn{background:#1976d2;}
+.clear-btn{background:#f57c00;}
+.delete-btn{background:#c62828;}
+
 .new-student{
   margin-top:70px;
 }
 
-button{
-  margin-top:10px;
+.admin-box{
+  margin-top:35px;
+  padding-top:20px;
+  border-top:1px solid #ccc;
 }
 </style>
 </head>
@@ -107,9 +135,19 @@ button{
 
 </div>
 
+<div class="admin-box">
+  <button onclick="deleteAllStatsOnly()" style="background:#f57c00;color:white;">
+    מחק את כל הסטטיסטיקה
+  </button>
 </div>
 
+</div>
+
+<script src="stats.js"></script>
+
 <script>
+
+const ADMIN_PASSWORD = "1234";
 
 function getStudents(){
   const list =
@@ -170,12 +208,38 @@ function renderSuggestions(){
     div.className =
       "suggestion";
 
-    div.innerHTML =
-      "<b>" + student.name + "</b>" +
-      "<div class='small-phone'>" + student.phone + "</div>";
+    div.innerHTML = `
+      <div class="student-line">
+        <div class="student-main">
+          <b>${student.name}</b>
+          <div class="small-phone">${student.phone}</div>
+        </div>
 
-    div.onclick =
-      () => selectStudent(student.phone);
+        <div class="action-group">
+          <button class="action-btn select-btn">בחר</button>
+          <button class="action-btn clear-btn">מחק סטטיסטיקה</button>
+          <button class="action-btn delete-btn">מחק תלמיד</button>
+        </div>
+      </div>
+    `;
+
+    div.querySelector(".select-btn").onclick =
+      function(e){
+        e.stopPropagation();
+        selectStudent(student.phone);
+      };
+
+    div.querySelector(".clear-btn").onclick =
+      function(e){
+        e.stopPropagation();
+        deleteOnlyStudentStats(student.phone, student.name);
+      };
+
+    div.querySelector(".delete-btn").onclick =
+      function(e){
+        e.stopPropagation();
+        deleteStudentCompletely(student.phone, student.name);
+      };
 
     box.appendChild(div);
 
@@ -243,6 +307,102 @@ function addStudent(){
   saveStudents(students);
 
   selectStudent(phone);
+}
+
+function askAdminPassword(){
+  const pass =
+    prompt("הכנס סיסמת מנהל");
+
+  return pass === ADMIN_PASSWORD;
+}
+
+function deleteOnlyStudentStats(phone, name){
+
+  if(!askAdminPassword()){
+    alert("סיסמה שגויה");
+    return;
+  }
+
+  const ok =
+    confirm("למחוק רק את הסטטיסטיקה של " + name + "?");
+
+  if(!ok) return;
+
+  if(typeof Stats !== "undefined"){
+    Stats.deleteStudentStats(phone);
+  } else {
+    let stats =
+      JSON.parse(localStorage.getItem("lexoraStats") || "[]");
+
+    stats =
+      stats.filter(r => r.studentId !== phone);
+
+    localStorage.setItem(
+      "lexoraStats",
+      JSON.stringify(stats)
+    );
+  }
+
+  alert("הסטטיסטיקה נמחקה");
+  renderSuggestions();
+}
+
+function deleteStudentCompletely(phone, name){
+
+  if(!askAdminPassword()){
+    alert("סיסמה שגויה");
+    return;
+  }
+
+  const ok =
+    confirm("למחוק את התלמיד " + name + " יחד עם כל הסטטיסטיקה שלו?");
+
+  if(!ok) return;
+
+  let students =
+    getStudents()
+    .filter(s => s.phone !== phone);
+
+  saveStudents(students);
+
+  if(typeof Stats !== "undefined"){
+    Stats.deleteStudentStats(phone);
+  }
+
+  const currentId =
+    localStorage.getItem("currentStudentId");
+
+  if(currentId === phone){
+    localStorage.removeItem("currentStudent");
+    localStorage.removeItem("currentStudentName");
+    localStorage.removeItem("currentStudentId");
+  }
+
+  alert("התלמיד והסטטיסטיקה נמחקו");
+
+  document.getElementById("searchBox").value = "";
+  renderSuggestions();
+}
+
+function deleteAllStatsOnly(){
+
+  if(!askAdminPassword()){
+    alert("סיסמה שגויה");
+    return;
+  }
+
+  const ok =
+    confirm("האם למחוק את כל הסטטיסטיקה של כל התלמידים?");
+
+  if(!ok) return;
+
+  if(typeof Stats !== "undefined"){
+    Stats.deleteAllStats();
+  } else {
+    localStorage.removeItem("lexoraStats");
+  }
+
+  alert("כל הסטטיסטיקה נמחקה");
 }
 
 document.addEventListener("click", function(e){

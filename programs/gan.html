@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <title>גן ילדים</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../style.css">
 </head>
 
 <body>
 
 <header class="topbar">
   <b>LexoraLab</b>
-  <a href="dashboard.html" class="small-link">חזרה</a>
+  <a href="../dashboard.html" class="small-link">חזרה</a>
 </header>
 
 <div class="container">
@@ -33,12 +33,12 @@
       <span>Word & Picture</span>
     </a>
 
-    <a href="nikud_training.html" class="program-button">
+    <a href="hard_nikud.html" class="program-button">
       אימון ניקוד
       <span>Nikud Training</span>
     </a>
 
-    <a href="ticker_words.html" class="program-button">
+    <a href="trainer_3.html" class="program-button">
       טיקר מילים
       <span>Reading Ticker</span>
     </a>
@@ -51,21 +51,12 @@
 const studentName = localStorage.getItem("currentStudentName");
 const studentId = localStorage.getItem("currentStudentId");
 
-if (
-  !studentName ||
-  !studentId ||
-  studentName.trim() === "" ||
-  studentId.trim() === ""
-) {
-  window.location.href = "student.html";
+if (!studentName || !studentId) {
+  window.location.href = "../student.html";
 }
 
-const info = document.getElementById("studentInfo");
-
-if (info) {
-  info.innerHTML =
-    "תלמיד: " + studentName + " | מזהה: " + studentId;
-}
+document.getElementById("studentInfo").innerHTML =
+  "תלמיד: " + studentName + " | מזהה: " + studentId;
 </script>
 
 </body>

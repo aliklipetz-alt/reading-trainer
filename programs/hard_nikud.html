@@ -207,7 +207,7 @@ textarea{width:100%;min-height:260px;border:1px solid var(--line);border-radius:
     </div>
   </div>
 </div>
-
+ <script src="../stats.js"></script>
 <script>
 const els = {
   settingsPanel: document.getElementById('settingsPanel'),
@@ -500,6 +500,15 @@ function endSession(){
   clearInterval(sessionTimer);
   const elapsed = Math.round((Date.now()-sessionStarted)/1000);
   const acc = stats.presses ? Math.round(stats.correct/stats.presses*100) : 100;
+  if (typeof Stats !== "undefined") {
+  Stats.saveResult({
+    program: "מאמן ניקוד",
+    correct: stats.correct,
+    wrong: stats.mistakes,
+    percent: acc,
+    duration: elapsed
+  });
+}
   els.finalDone.textContent = stats.done;
   els.finalMistakes.textContent = stats.mistakes;
   els.finalAccuracy.textContent = acc + '%';
@@ -552,6 +561,6 @@ els.closeBtn.onclick = () => els.modal.classList.remove('show');
 
 updateHud();
 </script>
-  <script src="../stats.js"></script>
+ 
 </body>
 </html>

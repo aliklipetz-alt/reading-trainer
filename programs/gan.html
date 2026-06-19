@@ -1,62 +1,110 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>גן ילדים</title>
-  <link rel="stylesheet" href="../style.css">
+<meta charset="UTF-8">
+<title>גן ילדים</title>
+
+<link rel="stylesheet" href="../style.css">
+
+<style>
+.programs{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:20px;
+    margin-top:30px;
+}
+
+.program-button{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    min-height:140px;
+    background:#1e88e5;
+    color:white;
+    text-decoration:none;
+    border-radius:15px;
+    font-size:28px;
+    font-weight:bold;
+    transition:0.2s;
+}
+
+.program-button:hover{
+    transform:scale(1.03);
+}
+
+.program-button span{
+    font-size:16px;
+    margin-top:10px;
+}
+
+#studentInfo{
+    font-size:22px;
+    font-weight:bold;
+    color:white;
+    margin-bottom:25px;
+}
+</style>
+
 </head>
 
 <body>
 
 <header class="topbar">
-  <b>LexoraLab</b>
-  <a href="../dashboard.html" class="small-link">חזרה</a>
+    <b>LexoraLab</b>
+    <a href="../dashboard.html" class="small-link">חזרה</a>
 </header>
 
 <div class="container">
 
-  <h1>גן ילדים</h1>
+    <h1>גן ילדים</h1>
 
-  <div id="studentInfo"
-       style="font-size:20px; font-weight:bold; color:#004080; margin-bottom:20px;">
-  </div>
+    <div id="studentInfo"></div>
 
-  <div class="programs">
+    <div class="programs">
 
-    <a href="motor_training.html" class="program-button">
-      אימון מוטורי
-      <span>Motor Training</span>
-    </a>
+        <a href="motor_training.html" class="program-button">
+            אימון מוטורי
+            <span>Motor Training</span>
+        </a>
 
-    <a href="word_picture.html" class="program-button">
-      מילה ותמונה
-      <span>Word & Picture</span>
-    </a>
+        <a href="voice.html" class="program-button">
+            קול קורא
+            <span>Voice Nikud</span>
+        </a>
 
-    <a href="hard_nikud.html" class="program-button">
-      אימון ניקוד
-      <span>Nikud Training</span>
-    </a>
+        <a href="hard_nikud.html" class="program-button">
+            אימון ניקוד
+            <span>Nikud Training</span>
+        </a>
 
-    <a href="trainer_3.html" class="program-button">
-      טיקר מילים
-      <span>Reading Ticker</span>
-    </a>
+        <a href="trainer_3.html" class="program-button">
+            טיקר מילים
+            <span>Reading Ticker</span>
+        </a>
 
-  </div>
+    </div>
 
 </div>
 
 <script>
-const studentName = localStorage.getItem("currentStudentName");
-const studentId = localStorage.getItem("currentStudentId");
+
+const studentName =
+    localStorage.getItem("currentStudentName");
+
+const studentId =
+    localStorage.getItem("currentStudentId");
 
 if (!studentName || !studentId) {
-  window.location.href = "../student.html";
+    window.location.href = "../student.html";
 }
 
 document.getElementById("studentInfo").innerHTML =
-  "תלמיד: " + studentName + " | מזהה: " + studentId;
+    "תלמיד: " +
+    studentName +
+    " | מזהה: " +
+    studentId;
+
 </script>
 
 </body>

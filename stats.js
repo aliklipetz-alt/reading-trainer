@@ -1,31 +1,68 @@
 const Stats = {
 
+  getCurrentStudent() {
+    return {
+      name: localStorage.getItem("currentStudentName") ||
+            localStorage.getItem("currentStudent") ||
+            "",
+      id: localStorage.getItem("currentStudentId") || ""
+    };
+  },
+
   saveResult(result) {
-    const studentName = localStorage.getItem("currentStudentName") || localStorage.getItem("currentStudent");
-    const studentId = localStorage.getItem("currentStudentId") || "";
+    const student = this.getCurrentStudent();
 
-    if (!studentName) return;
+    if (
+      !student.name ||
+      !student.id ||
+      student.name.trim() === "" ||
+      student.id.trim() === ""
+    ) {
+      alert("לא נבחר תלמיד");
+      return;
+    }
 
-    const allResults = JSON.parse(localStorage.getItem("lexoraStats") || "[]");
+    const allResults =
+      JSON.parse(localStorage.getItem("lexoraStats") || "[]");
 
     allResults.push({
-      student: studentName,
-      studentId: studentId,
-      date: new Date().toLocaleString(),
-      ...result
+      studentName: student.name,
+      studentId: student.id,
+      date: new Date().toLocaleString("he-IL"),
+      program: result.program || "",
+      correct: Number(result.correct || 0),
+      wrong: Number(result.wrong || 0),
+      percent: Number(result.percent || 0),
+      duration: Number(result.duration || 0),
+      details: result.details || {}
     });
 
-    localStorage.setItem("lexoraStats", JSON.stringify(allResults));
+    localStorage.setItem(
+      "lexoraStats",
+      JSON.stringify(allResults)
+    );
   },
 
   getAllResults() {
-    return JSON.parse(localStorage.getItem("lexoraStats") || "[]");
+    return JSON.parse(
+      localStorage.getItem("lexoraStats") || "[]"
+    );
+  },
+
+  getResultsByStudent(studentId) {
+    return this.getAllResults()
+      .filter(r => r.studentId === studentId);
   },
 
   deleteStudentStats(studentId) {
-    const allResults = this.getAllResults();
-    const filtered = allResults.filter(r => r.studentId !== studentId);
-    localStorage.setItem("lexoraStats", JSON.stringify(filtered));
+    const filtered =
+      this.getAllResults()
+        .filter(r => r.studentId !== studentId);
+
+    localStorage.setItem(
+      "lexoraStats",
+      JSON.stringify(filtered)
+    );
   },
 
   deleteAllStats() {

@@ -4,54 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>בחירת תלמיד</title>
-
 <link rel="stylesheet" href="style.css">
 
 <style>
-.student-box{
-    max-width:1000px;
-    margin:30px auto;
-    text-align:center;
-}
-
-input{
-    width:90%;
-    padding:12px;
-    margin:8px;
-    font-size:18px;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:20px;
-    background:white;
-}
-
-th,td{
-    border:1px solid #ccc;
-    padding:10px;
-    text-align:center;
-}
-
-.action-btn{
-    padding:8px 14px;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-    color:white;
-}
-
-.select-btn{
-    background:#1976d2;
-}
-
-.delete-btn{
-    background:#c62828;
-}
+.student-box{max-width:1000px;margin:30px auto;text-align:center}
+input{width:90%;padding:12px;margin:8px;font-size:18px}
+table{width:100%;border-collapse:collapse;margin-top:20px;background:white}
+th,td{border:1px solid #ccc;padding:10px;text-align:center}
+.action-btn{padding:8px 14px;border:none;border-radius:6px;cursor:pointer;color:white}
+.select-btn{background:#1976d2}
+.delete-btn{background:#c62828}
+#resultsArea{display:none}
 </style>
-
 </head>
+
 <body>
 
 <div class="container student-box">
@@ -65,6 +31,7 @@ autocomplete="off"
 placeholder="חיפוש לפי שם או טלפון"
 oninput="renderStudents()">
 
+<div id="resultsArea">
 <table>
 <thead>
 <tr>
@@ -73,194 +40,128 @@ oninput="renderStudents()">
 <th>פעולות</th>
 </tr>
 </thead>
-
-<tbody id="studentTable">
-</tbody>
-
+<tbody id="studentTable"></tbody>
 </table>
+</div>
 
 <h2 style="margin-top:40px;">תלמיד חדש</h2>
 
-<input
-id="newName"
-type="text"
-autocomplete="off"
-placeholder="שם תלמיד">
+<input id="newName" type="text" autocomplete="off" placeholder="שם תלמיד">
+<input id="newPhone" type="text" autocomplete="off" placeholder="טלפון / מזהה">
 
-<input
-id="newPhone"
-type="text"
-autocomplete="off"
-placeholder="טלפון / מזהה">
-
-<button onclick="addStudent()">
-הוסף תלמיד חדש
-</button>
+<button onclick="addStudent()">הוסף תלמיד חדש</button>
 
 </div>
 
 <script>
 
 function getStudents(){
-    return JSON.parse(
-        localStorage.getItem("students") || "[]"
+    const list = JSON.parse(localStorage.getItem("students") || "[]");
+
+    return list.filter(s =>
+        s &&
+        s.name &&
+        s.phone &&
+        s.name.trim() !== "" &&
+        s.phone.trim() !== ""
     );
 }
 
 function saveStudents(list){
-    localStorage.setItem(
-        "students",
-        JSON.stringify(list)
-    );
+    localStorage.setItem("students", JSON.stringify(list));
 }
 
 function renderStudents(){
-
-    const search =
-        document.getElementById("searchBox")
-        .value
-        .toLowerCase();
-
-    const students = getStudents();
-
-    const filtered =
-        students.filter(s =>
-            s.name.toLowerCase().includes(search) ||
-            s.phone.includes(search)
-        );
-
-    const table =
-        document.getElementById("studentTable");
+    const search = document.getElementById("searchBox").value.trim().toLowerCase();
+    const table = document.getElementById("studentTable");
+    const resultsArea = document.getElementById("resultsArea");
 
     table.innerHTML = "";
 
-    filtered.forEach(student => {
+    if(search === ""){
+        resultsArea.style.display = "none";
+        return;
+    }
 
-        table.innerHTML += `
-        <tr>
+    const filtered = getStudents().filter(s =>
+        s.name.toLowerCase().includes(search) ||
+        s.phone.includes(search)
+    );
+
+    if(filtered.length === 0){
+        resultsArea.style.display = "none";
+        return;
+    }
+
+    resultsArea.style.display = "block";
+
+    filtered.forEach(student => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
             <td>${student.name}</td>
             <td>${student.phone}</td>
-
             <td>
-
-            <button
-            class="action-btn select-btn"
-            onclick="selectStudent('${student.phone}')">
-            בחר
-            </button>
-
-            <button
-            class="action-btn delete-btn"
-            onclick="deleteStudent('${student.phone}')">
-            מחק
-            </button>
-
+                <button class="action-btn select-btn" onclick="selectStudent('${student.phone}')">בחר</button>
+                <button class="action-btn delete-btn" onclick="deleteStudent('${student.phone}')">מחק</button>
             </td>
-        </tr>
         `;
-    });
 
+        table.appendChild(row);
+    });
 }
 
 function selectStudent(phone){
-
-    const students = getStudents();
-
-    const student =
-        students.find(
-            s => s.phone === phone
-        );
-
+    const student = getStudents().find(s => s.phone === phone);
     if(!student) return;
 
-    localStorage.setItem(
-        "currentStudent",
-        student.name
-    );
+    localStorage.setItem("currentStudent", student.name);
+    localStorage.setItem("currentStudentName", student.name);
+    localStorage.setItem("currentStudentId", student.phone);
 
-    localStorage.setItem(
-        "currentStudentId",
-        student.phone
-    );
-
-    window.location.href =
-        "dashboard.html";
+    window.location.href = "dashboard.html";
 }
 
 function addStudent(){
-
-    const name =
-        document.getElementById("newName")
-        .value.trim();
-
-    const phone =
-        document.getElementById("newPhone")
-        .value.trim();
+    const name = document.getElementById("newName").value.trim();
+    const phone = document.getElementById("newPhone").value.trim();
 
     if(!name || !phone){
-        alert("יש למלא את כל השדות");
+        alert("יש למלא שם וטלפון");
         return;
     }
 
     const students = getStudents();
 
-    const exists =
-        students.find(
-            s => s.phone === phone
-        );
+    const exists = students.find(s => s.phone === phone);
 
     if(exists){
-        alert("תלמיד כבר קיים");
+        alert("התלמיד כבר קיים");
+        selectStudent(phone);
         return;
     }
 
-    students.push({
-        name,
-        phone
-    });
-
+    students.push({name, phone});
     saveStudents(students);
 
-    document.getElementById("newName").value="";
-    document.getElementById("newPhone").value="";
-
-    renderStudents();
+    selectStudent(phone);
 }
 
 function deleteStudent(phone){
-
-    const pass =
-        prompt("הכנס סיסמה למחיקה");
+    const pass = prompt("הכנס סיסמה למחיקה");
 
     if(pass !== "1234"){
         alert("סיסמה שגויה");
         return;
     }
 
-    let students = getStudents();
-
-    students =
-        students.filter(
-            s => s.phone !== phone
-        );
-
+    let students = getStudents().filter(s => s.phone !== phone);
     saveStudents(students);
 
-    let stats =
-        JSON.parse(
-            localStorage.getItem("lexoraStats")
-            || "[]"
-        );
+    let stats = JSON.parse(localStorage.getItem("lexoraStats") || "[]");
+    stats = stats.filter(r => r.studentId !== phone);
 
-    stats =
-        stats.filter(
-            s => s.studentId !== phone
-        );
-
-    localStorage.setItem(
-        "lexoraStats",
-        JSON.stringify(stats)
-    );
+    localStorage.setItem("lexoraStats", JSON.stringify(stats));
 
     renderStudents();
 }

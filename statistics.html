@@ -1,1 +1,91 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>סטטיסטיקה</title>
+<link rel="stylesheet" href="style.css">
 
+<style>
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+th,td{
+    border:1px solid #ccc;
+    padding:8px;
+    text-align:center;
+}
+
+th{
+    background:#f0f0f0;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>סטטיסטיקת תלמידים</h1>
+
+<table id="statsTable">
+
+<thead>
+<tr>
+<th>תלמיד</th>
+<th>תאריך</th>
+<th>תוכנית</th>
+<th>נכון</th>
+<th>שגיאות</th>
+<th>אחוז הצלחה</th>
+<th>זמן</th>
+</tr>
+</thead>
+
+<tbody>
+</tbody>
+
+</table>
+
+<br>
+
+<a href="dashboard.html">
+חזרה ללוח הראשי
+</a>
+
+</div>
+
+<script src="stats.js"></script>
+
+<script>
+
+const results = Stats.getAllResults();
+
+const tbody =
+document.querySelector("#statsTable tbody");
+
+results.reverse().forEach(r => {
+
+const row = document.createElement("tr");
+
+row.innerHTML = `
+<td>${r.student || ""}</td>
+<td>${r.date || ""}</td>
+<td>${r.program || ""}</td>
+<td>${r.correct || 0}</td>
+<td>${r.wrong || 0}</td>
+<td>${r.percent || 0}%</td>
+<td>${r.duration || 0}</td>
+`;
+
+tbody.appendChild(row);
+
+});
+
+</script>
+
+</body>
+</html>

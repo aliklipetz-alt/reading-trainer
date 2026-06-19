@@ -1,24 +1,46 @@
-<script>
-function login() {
-  const password = document.getElementById("password").value;
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - LexoraLab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
 
-  if (password === "1234") {
-    localStorage.setItem("lexoraLoggedIn", "yes");
+<body>
+  <div class="container">
+    <div class="login-box">
+      <h2>כניסה למערכת</h2>
 
-    let studentName = prompt("Введите имя ученика / הכנס שם תלמיד:");
+      <input type="password" id="password" placeholder="סיסמה / Password">
 
-    if (!studentName || studentName.trim() === "") {
-      alert("Нужно ввести имя ученика");
-      return;
+      <button onclick="login()">כניסה / Login</button>
+
+      <p id="error" style="color:red; display:none;">סיסמה שגויה</p>
+    </div>
+  </div>
+
+  <script>
+    function login() {
+      const password = document.getElementById("password").value;
+
+      if (password === "1234") {
+        localStorage.setItem("lexoraLoggedIn", "yes");
+
+        let studentName = prompt("Введите имя ученика / הכנס שם תלמיד:");
+
+        if (!studentName || studentName.trim() === "") {
+          alert("Нужно ввести имя ученика");
+          return;
+        }
+
+        studentName = studentName.trim();
+        localStorage.setItem("currentStudent", studentName);
+
+        window.location.href = "dashboard.html";
+      } else {
+        document.getElementById("error").style.display = "block";
+      }
     }
-
-    studentName = studentName.trim();
-
-    localStorage.setItem("currentStudent", studentName);
-
-    window.location.href = "dashboard.html";
-  } else {
-    document.getElementById("error").style.display = "block";
-  }
-}
-</script>
+  </script>
+</body>
+</html>

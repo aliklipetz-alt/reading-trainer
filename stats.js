@@ -28,3 +28,10 @@ const Stats = {
   }
 
 };
+Stats.saveResult({
+  program: "בדיקה",
+  correct: 10,
+  wrong: 2,
+  percent: 83,
+  duration: 60
+});

@@ -113,7 +113,17 @@ function renderStudents(){
 
 function selectStudent(phone){
     const student = getStudents().find(s => s.phone === phone);
-    if(!student) return;
+
+    if(
+        !student ||
+        !student.name ||
+        !student.phone ||
+        student.name.trim() === "" ||
+        student.phone.trim() === ""
+    ){
+        alert("לא ניתן לבחור תלמיד ריק");
+        return;
+    }
 
     localStorage.setItem("currentStudent", student.name);
     localStorage.setItem("currentStudentName", student.name);

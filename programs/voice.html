@@ -1,518 +1,262 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>מאמן קריאה עם ניקוד ודיבור v6</title>
-  <style>
-    :root{
-      --bg:#f5f7fb; --panel:#ffffff; --text:#162033; --muted:#667085;
-      --blue:#2563eb; --green:#15803d; --red:#b91c1c; --orange:#c2410c;
-      --border:#d8dee9;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Arial,"Noto Sans Hebrew",sans-serif;background:var(--bg);color:var(--text)}
-    .wrap{max-width:1100px;margin:0 auto;padding:24px}
-    .card{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:22px;box-shadow:0 8px 25px rgba(15,23,42,.08)}
-    h1{font-size:30px;margin:0 0 10px;text-align:center}
-    .sub{text-align:center;color:var(--muted);margin-bottom:18px;font-size:16px}
-    textarea{width:100%;min-height:190px;border:1px solid var(--border);border-radius:14px;padding:14px;font-size:24px;line-height:1.7;direction:rtl;resize:vertical;background:white}
-    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:14px}
-    .field{display:flex;gap:8px;align-items:center;background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:8px 12px}
-    label{font-size:15px;color:#344054}
-    input[type="number"], select{border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:16px;background:white}
-    button{border:none;border-radius:14px;padding:13px 20px;font-size:18px;font-weight:700;cursor:pointer;background:var(--blue);color:white}
-    button.secondary{background:#475569}
-    button.good{background:var(--green)}
-    button.warn{background:var(--orange)}
-    button.bad{background:var(--red)}
-    button:disabled{opacity:.45;cursor:not-allowed}
-    .hidden{display:none!important}
-    #wordBox{min-height:260px;display:flex;align-items:center;justify-content:center;text-align:center;background:#fff;border:1px solid var(--border);border-radius:20px;margin:18px 0;padding:18px}
-    #word{font-size:96px;line-height:1.15;font-weight:700;letter-spacing:.02em}
-    .status{font-size:24px;text-align:center;min-height:40px;margin:8px 0;color:var(--muted)}
-    .status.ok{color:var(--green);font-weight:700}.status.err{color:var(--red);font-weight:700}.status.listen{color:var(--blue);font-weight:700}
-    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px}
-    .stat{background:#f8fafc;border:1px solid var(--border);border-radius:14px;padding:12px;text-align:center}
-    .stat .n{font-size:26px;font-weight:800}.stat .t{font-size:13px;color:var(--muted)}
-    .heard{direction:rtl;text-align:center;font-size:22px;min-height:32px;color:#334155;margin-top:6px}
-    .help{margin-top:14px;color:var(--muted);font-size:14px;line-height:1.6}
-    .summary{margin-top:18px;border-top:1px solid var(--border);padding-top:18px}
-    .summary h2{margin:0 0 12px;text-align:center;font-size:26px}
-    table{width:100%;border-collapse:collapse;background:white;border-radius:14px;overflow:hidden}
-    th,td{border:1px solid var(--border);padding:10px;text-align:center;font-size:16px}
-    th{background:#f1f5f9}
-    .problem{color:var(--red);font-weight:700}
-    .okword{color:var(--green);font-weight:700}
-    .small{font-size:13px;color:var(--muted)}
-    @media(max-width:700px){.wrap{padding:12px}#word{font-size:64px}.stats{grid-template-columns:repeat(2,1fr)}button{width:100%}.field{width:100%;justify-content:space-between}}
-  </style>
+<meta charset="UTF-8">
+<title>קול קורא</title>
+<style>
+body{font-family:Arial,sans-serif;background:#eef5ff;margin:0;color:#123}
+.app{max-width:1000px;margin:auto;padding:20px}
+.panel{background:white;border-radius:18px;padding:20px;box-shadow:0 8px 25px #0002;margin-bottom:20px}
+textarea{width:100%;height:220px;font-size:22px;direction:rtl}
+input,select,button{font-size:18px;padding:10px;margin:6px;border-radius:10px}
+button{cursor:pointer;border:0;background:#2563eb;color:white;font-weight:bold}
+.warn{background:#c62828}
+.good{color:green;font-size:28px;font-weight:bold;text-align:center}
+.bad{color:red;font-size:28px;font-weight:bold;text-align:center}
+.word{font-size:72px;text-align:center;font-weight:bold;margin:35px}
+.status{text-align:center;font-size:22px;margin:15px}
+.hidden{display:none}
+</style>
 </head>
-<body>
-  <div class="wrap">
-    <div id="menu" class="card">
-      <h1>מאמן קריאה בקול עם ניקוד</h1>
-      <div class="sub">הדבק מילים מנוקדות, לחץ התחלה, קרא בקול, והדפדפן ינסה לזהות את המילה.</div>
-      <textarea id="inputText" spellcheck="false">שָׁלוֹם בָּחוּר יֶלֶד מֶלֶךְ סֵפֶר תּוֹרָה בַּיִת אָבִיב חָכָם קָטָן</textarea>
-      <div class="row">
-        <div class="field"><label>מספר מילים</label><input id="wordLimit" type="number" min="1" value="10" /></div>
-        <div class="field"><label>זמן שיעור בדקות</label><input id="sessionMinutes" type="number" min="1" max="120" value="3" /></div>
-        <div class="field"><label>מספר ניסיונות לפני מעבר</label><input id="maxTries" type="number" min="1" value="3" /></div>
-        <div class="field"><label>מצב</label><select id="mode"><option value="strict">בדיקה רגילה</option><option value="hint">אחרי 3 טעויות — השמעת דוגמה ומעבר</option><option value="manual">ידני: מורה מאשר</option></select></div>
-        <div class="field"><label>משוב קולי</label><select id="feedbackMode"><option value="voice">קול: נכון / לא נכון</option><option value="beep">צלילים בלבד</option><option value="both">קול + צלילים</option><option value="off">בלי משוב קולי</option></select></div>
-        <button id="startBtn">התחל</button>
-      </div>
-      <div class="help" dir="rtl">
-        חשוב: בדפדפנים רבים הזיהוי מחזיר טקסט בלי ניקוד. לכן התוכנה משווה בעיקר את צורת המילה בלי ניקוד. מומלץ לפתוח ב-Chrome או Edge ולאפשר גישה למיקרופון.
-      </div>
-    </div>
 
-    <div id="trainer" class="card hidden">
-      <div class="row" style="justify-content:space-between;margin-top:0">
-        <button class="secondary" id="backBtn">חזרה לתפריט</button>
-        <div class="small" id="progress">0 / 0</div>
-      </div>
-      <div id="wordBox"><div id="word"></div></div>
-      <div id="status" class="status">המיקרופון יישאר פתוח לאורך כל השיעור</div>
-      <div id="heard" class="heard"></div>
-      <div class="row" style="justify-content:center">
-        <button id="micInitBtn" class="good">🎙️ הפעל מיקרופון קבוע</button>
-        <button id="listenBtn">🎧 התחל זיהוי רציף</button>
-        <button id="speakBtn" class="warn">🔊 השמע דוגמה</button>
-        <button id="goodBtn" class="good hidden">✓ נכון</button>
-        <button id="badBtn" class="bad hidden">↺ שוב</button>
-        <button id="nextBtn" class="secondary">המילה הבאה</button>
-      </div>
-      <div class="stats">
-        <div class="stat"><div class="n" id="sCorrect">0</div><div class="t">נכון</div></div>
-        <div class="stat"><div class="n" id="sWrong">0</div><div class="t">טעויות</div></div>
-        <div class="stat"><div class="n" id="sRepeats">0</div><div class="t">חזרות</div></div>
-        <div class="stat"><div class="n" id="sSkipped">0</div><div class="t">דילוגים</div></div>
-        <div class="stat"><div class="n" id="sTime">00:00</div><div class="t">זמן נשאר</div></div>
-      </div>
-      <div id="summary" class="summary hidden"></div>
-    </div>
-  </div>
+<body>
+
+<div class="app">
+
+<div id="setup" class="panel">
+<h1>קול קורא</h1>
+<p>כתוב כל שורה בצורה: מילה בעברית | הגייה</p>
+
+<textarea id="wordList">כֶּלֶב | kelev
+מֶלֶךְ | melech
+שָׁלוֹם | shalom
+בָּ | ba
+בִּ | bi
+בּוֹ | bo</textarea>
+
+<br>
+
+<label>משך סשן:</label>
+<select id="sessionTime">
+<option value="30">30 שניות</option>
+<option value="60" selected>60 שניות</option>
+<option value="120">120 שניות</option>
+<option value="180">180 שניות</option>
+<option value="300">300 שניות</option>
+</select>
+
+<label>שפת זיהוי:</label>
+<select id="recognitionLang">
+<option value="en-US" selected>English</option>
+<option value="he-IL">עברית</option>
+</select>
+
+<br>
+
+<button onclick="startSession()">התחל</button>
+<a href="gan.html"><button type="button">חזרה</button></a>
+</div>
+
+<div id="game" class="panel hidden">
+
+<div class="status">
+זמן: <span id="timer">0</span> |
+נכון: <span id="correct">0</span> |
+טעויות: <span id="wrong">0</span>
+</div>
+
+<div id="wordBox" class="word"></div>
+
+<div class="status">
+<button onclick="speakWord()">השמע מילה</button>
+<button onclick="listen()">הקשב לתלמיד</button>
+<button class="warn" onclick="endSession()">סיים</button>
+</div>
+
+<div id="result" class="status"></div>
+<div id="heard" class="status"></div>
+
+</div>
+
+</div>
+
+<script src="../stats.js"></script>
 
 <script>
-(() => {
-  const $ = id => document.getElementById(id);
-  const HEB_NIKUD = /[\u0591-\u05C7]/g;
-  const PUNCT = /[.,!?;:()\[\]{}"'״׳־\-–—\n\r\t]+/g;
+let words = [];
+let current = null;
+let correct = 0;
+let wrong = 0;
+let startTime = 0;
+let timerInterval = null;
+let sessionSeconds = 60;
+let running = false;
 
-  let words = [], idx = 0, tries = 0, startedAt = 0, timer = null, sessionLimitSec = 0;
-  let stats = {correct:0, wrong:0, repeats:0, skipped:0, attempts:0};
-  let wordStats = {};
-  let recognition = null, listening = false, keepRecognitionRunning = false;
-  let micStream = null, micReady = false;
-  let audioCtx = null, micSource = null, silentGain = null;
-  let processingLock = false;
-  let lastTranscript = '';
-  let ignoreRecognitionUntil = 0;
-  let feedbackSpeaking = false;
+function parseWords(){
+  return document.getElementById("wordList").value
+    .split("\n")
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => {
+      const parts = line.split("|");
+      return {
+        hebrew: (parts[0] || "").trim(),
+        speech: (parts[1] || parts[0] || "").trim().toLowerCase()
+      };
+    })
+    .filter(w => w.hebrew && w.speech);
+}
 
-  function stripNikud(s){ return (s || '').normalize('NFC').replace(HEB_NIKUD,''); }
-  function normalizeHebrew(s){
-    return stripNikud(s).replace(PUNCT,' ').replace(/\s+/g,' ').trim();
-  }
-  function splitWords(text){
-    return text.replace(PUNCT,' ').split(/\s+/).map(w=>w.trim()).filter(Boolean);
-  }
-  function fmt(sec){
-    sec = Math.max(0, Math.floor(sec));
-    const m = String(Math.floor(sec/60)).padStart(2,'0'), s = String(sec%60).padStart(2,'0');
-    return `${m}:${s}`;
-  }
-  function ensureWordStat(w){
-    const key = stripNikud(w);
-    if(!wordStats[key]) wordStats[key] = {word:w, shown:0, correct:0, wrong:0, repeats:0, skipped:0};
-    return wordStats[key];
-  }
-  function levenshtein(a,b){
-    const m=a.length,n=b.length,dp=Array.from({length:m+1},()=>Array(n+1).fill(0));
-    for(let i=0;i<=m;i++)dp[i][0]=i; for(let j=0;j<=n;j++)dp[0][j]=j;
-    for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
-    return dp[m][n];
-  }
-  function isMatch(expected, heard){
-    const e = normalizeHebrew(expected);
-    const h = normalizeHebrew(heard);
-    if(!e || !h) return false;
-    if(h === e) return true;
-    const parts = h.split(' ');
-    if(parts.includes(e)) return true;
-    return parts.some(p => levenshtein(e,p) <= (e.length <= 3 ? 0 : 1));
-  }
-  function setStatus(text, cls=''){
-    $('status').className = 'status ' + cls;
-    $('status').textContent = text;
-  }
-  function updateStats(){
-    $('sCorrect').textContent = stats.correct;
-    $('sWrong').textContent = stats.wrong;
-    $('sRepeats').textContent = stats.repeats;
-    $('sSkipped').textContent = stats.skipped;
-    $('progress').textContent = `${Math.min(idx+1, words.length)} / ${words.length}`;
-  }
-  function showWord(){
-    if(idx >= words.length){ finish(); return; }
-    tries = 0;
-    ensureWordStat(words[idx]).shown++;
-    $('word').textContent = words[idx];
-    $('heard').textContent = '';
-    setStatus(micReady ? 'המיקרופון פתוח. קרא את המילה בקול' : 'הפעל מיקרופון קבוע בתחילת השיעור');
-    updateStats();
-  }
-  function finish(reason='done'){
-    clearInterval(timer);
-    keepRecognitionRunning = false;
-    try{ recognition?.abort?.(); }catch(e){}
-    listening = false;
-    const elapsed = Math.floor((Date.now() - startedAt)/1000);
-    $('sTime').textContent = fmt(elapsed);
-    $('word').textContent = 'סיום';
-    $('heard').textContent = '';
-    const totalAnswers = stats.correct + stats.wrong;
-    const accuracy = totalAnswers ? Math.round(stats.correct / totalAnswers * 100) : 0;
-    setStatus(reason === 'time' ? 'זמן השיעור הסתיים' : 'התרגול הסתיים', 'ok');
-    $('listenBtn').disabled = true;
-    $('nextBtn').disabled = true;
-    $('micInitBtn').disabled = true;
+function startSession(){
+  words = parseWords();
 
-    const rows = Object.values(wordStats)
-      .sort((a,b)=>(b.wrong+b.repeats+b.skipped)-(a.wrong+a.repeats+a.skipped) || a.word.localeCompare(b.word,'he'))
-      .map(w => `<tr>
-        <td>${w.word}</td><td>${w.shown}</td><td class="okword">${w.correct}</td><td class="problem">${w.wrong}</td><td>${w.repeats}</td><td>${w.skipped}</td>
-      </tr>`).join('');
-
-    $('summary').innerHTML = `
-      <h2>סטטיסטיקה מלאה</h2>
-      <div class="stats">
-        <div class="stat"><div class="n">${fmt(elapsed)}</div><div class="t">זמן בפועל</div></div>
-        <div class="stat"><div class="n">${stats.correct}</div><div class="t">תשובות נכונות</div></div>
-        <div class="stat"><div class="n">${stats.wrong}</div><div class="t">טעויות</div></div>
-        <div class="stat"><div class="n">${stats.repeats}</div><div class="t">חזרות</div></div>
-        <div class="stat"><div class="n">${accuracy}%</div><div class="t">דיוק</div></div>
-      </div>
-      <div class="help">מילים בעייתיות מופיעות בראש הטבלה לפי מספר טעויות/חזרות/דילוגים.</div>
-      <table>
-        <thead><tr><th>מילה</th><th>הופיעה</th><th>נכון</th><th>טעויות</th><th>חזרות</th><th>דילוגים</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="6">אין נתונים</td></tr>'}</tbody>
-      </table>`;
-    $('summary').classList.remove('hidden');
-  }
-  function next(skip=false){
-    if(idx >= words.length) { finish(); return; }
-    if(skip) { stats.skipped++; ensureWordStat(words[idx]).skipped++; }
-    idx++;
-    showWord();
+  if(words.length === 0){
+    alert("אין מילים ברשימה");
+    return;
   }
 
-  async function initMicrophoneOnce(){
-    if(micReady && micStream) return true;
-    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-      setStatus('הדפדפן לא מאפשר גישה ישירה למיקרופון. נסה Chrome.', 'err');
-      return false;
+  correct = 0;
+  wrong = 0;
+  running = true;
+  sessionSeconds = Number(document.getElementById("sessionTime").value);
+  startTime = Date.now();
+
+  document.getElementById("setup").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+
+  updateHud();
+  nextWord();
+
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const remain = Math.max(0, sessionSeconds - elapsed);
+    document.getElementById("timer").textContent = remain;
+
+    if(remain <= 0){
+      endSession();
     }
-    try{
-      setStatus('מבקש הרשאה למיקרופון. אחרי האישור המיקרופון נשאר פתוח עד סוף השיעור', 'listen');
-      micStream = await navigator.mediaDevices.getUserMedia({
-        audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true }
-      });
+  }, 500);
+}
 
-      // חשוב: זה מחזיק את זרם המיקרופון חי כל הזמן, בלי להשמיע אותו ברמקולים.
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      micSource = audioCtx.createMediaStreamSource(micStream);
-      silentGain = audioCtx.createGain();
-      silentGain.gain.value = 0;
-      micSource.connect(silentGain);
-      silentGain.connect(audioCtx.destination);
+function nextWord(){
+  current = words[Math.floor(Math.random() * words.length)];
+  document.getElementById("wordBox").textContent = current.hebrew;
+  document.getElementById("result").textContent = "";
+  document.getElementById("heard").textContent = "";
+  speakWord();
+}
 
-      micReady = true;
-      $('micInitBtn').textContent = '✓ המיקרופון פתוח';
-      $('micInitBtn').disabled = true;
-      $('listenBtn').disabled = false;
-      setStatus('המיקרופון פתוח ונשאר פעיל. לחץ התחל זיהוי רציף וקרא את המילה', 'ok');
-      return true;
-    }catch(e){
-      micReady = false;
-      setStatus('לא התקבלה הרשאה למיקרופון: ' + (e.name || e.message), 'err');
-      return false;
-    }
-  }
-  function stopMicrophone(){
-    keepRecognitionRunning = false;
-    try{ recognition?.abort?.(); }catch(e){}
-    recognition = null;
-    listening = false;
-    processingLock = false;
-    if(micSource){ try{ micSource.disconnect(); }catch(e){} micSource = null; }
-    if(silentGain){ try{ silentGain.disconnect(); }catch(e){} silentGain = null; }
-    if(audioCtx){ try{ audioCtx.close(); }catch(e){} audioCtx = null; }
-    if(micStream){
-      micStream.getTracks().forEach(t => t.stop());
-      micStream = null;
-    }
-    micReady = false;
-    if($('micInitBtn')){
-      $('micInitBtn').disabled = false;
-      $('micInitBtn').textContent = '🎙️ הפעל מיקרופון קבוע';
-    }
-    if($('listenBtn')){
-      $('listenBtn').disabled = false;
-      $('listenBtn').textContent = '🎧 התחל זיהוי רציף';
-    }
-  }
-  function speakCurrent(onDone){
-    if(!('speechSynthesis' in window)) { setStatus('אין תמיכה בהשמעת קול בדפדפן הזה','err'); onDone && onDone(); return; }
-    if(idx >= words.length){ onDone && onDone(); return; }
+function speakWord(){
+  if(!current) return;
 
-    // המיקרופון נשאר פתוח, אבל בזמן הדוגמה אנחנו מתעלמים מהזיהוי כדי שהתוכנה לא תזהה את עצמה.
-    ignoreRecognitionUntil = Date.now() + 2600;
-    feedbackSpeaking = true;
+  speechSynthesis.cancel();
 
-    const u = new SpeechSynthesisUtterance(words[idx]);
-    u.lang = 'he-IL';
-    u.rate = 0.82;
-    u.pitch = 1;
-    u.volume = 1;
-    u.onend = () => {
-      ignoreRecognitionUntil = Date.now() + 650;
-      feedbackSpeaking = false;
-      onDone && onDone();
-    };
-    u.onerror = () => {
-      feedbackSpeaking = false;
-      onDone && onDone();
-    };
-    speechSynthesis.cancel();
-    speechSynthesis.speak(u);
+  const u = new SpeechSynthesisUtterance(current.speech);
+  u.lang = "en-US";
+  u.rate = 0.75;
+  u.pitch = 1;
+
+  speechSynthesis.speak(u);
+}
+
+function normalizeText(t){
+  return (t || "")
+    .toLowerCase()
+    .replace(/[.,!?;:]/g,"")
+    .replace(/\s+/g," ")
+    .trim();
+}
+
+function listen(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if(!SR){
+    alert("הדפדפן לא תומך בזיהוי דיבור. נסה Chrome או Edge.");
+    return;
   }
 
-  function playTone(kind){
-    try{
-      const ctx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      if(kind === 'ok'){
-        osc.frequency.setValueAtTime(660, now);
-        osc.frequency.setValueAtTime(880, now + 0.11);
-        gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.exponentialRampToValueAtTime(0.18, now + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.start(now); osc.stop(now + 0.28);
-      } else {
-        osc.frequency.setValueAtTime(220, now);
-        osc.frequency.setValueAtTime(180, now + 0.16);
-        gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.exponentialRampToValueAtTime(0.15, now + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.34);
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.start(now); osc.stop(now + 0.36);
-      }
-    }catch(e){}
-  }
+  const rec = new SR();
+  rec.lang = document.getElementById("recognitionLang").value;
+  rec.interimResults = false;
+  rec.maxAlternatives = 5;
 
-  function speakPhrase(text, onDone){
-    const mode = $('feedbackMode') ? $('feedbackMode').value : 'voice';
-    const shouldVoice = mode === 'voice' || mode === 'both';
-    const shouldBeep = mode === 'beep' || mode === 'both';
-    if(shouldBeep) playTone(text.includes('לא') ? 'bad' : 'ok');
+  document.getElementById("result").textContent = "מקשיב...";
 
-    // חשוב: המיקרופון הפיזי נשאר פתוח. בזמן שהמחשב מדבר אנחנו רק מתעלמים מתוצאות הזיהוי,
-    // כדי שהתוכנה לא תקלוט את הקול שלה עצמה בתור תשובה של הילד.
-    ignoreRecognitionUntil = Date.now() + 1600;
-    feedbackSpeaking = true;
+  rec.onresult = function(event){
+    const alternatives = Array.from(event.results[0])
+      .map(x => normalizeText(x.transcript));
 
-    if(!shouldVoice || !('speechSynthesis' in window)){
-      setTimeout(() => { feedbackSpeaking = false; onDone && onDone(); }, shouldBeep ? 420 : 80);
-      return;
+    const expected = normalizeText(current.speech);
+
+    document.getElementById("heard").textContent =
+      "זוהה: " + alternatives.join(" / ");
+
+    const ok = alternatives.some(t =>
+      t === expected ||
+      t.includes(expected) ||
+      expected.includes(t)
+    );
+
+    if(ok){
+      correct++;
+      document.getElementById("result").className = "good";
+      document.getElementById("result").textContent = "נכון";
+      updateHud();
+      setTimeout(nextWord, 900);
+    } else {
+      wrong++;
+      document.getElementById("result").className = "bad";
+      document.getElementById("result").textContent =
+        "לא נכון. ההגייה הנכונה: " + current.speech;
+      updateHud();
     }
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'he-IL';
-    u.rate = 0.9;
-    u.pitch = text.includes('לא') ? 0.85 : 1.08;
-    u.volume = 1;
-    u.onend = () => {
-      ignoreRecognitionUntil = Date.now() + 450;
-      feedbackSpeaking = false;
-      onDone && onDone();
-    };
-    u.onerror = () => {
-      feedbackSpeaking = false;
-      onDone && onDone();
-    };
-    speechSynthesis.cancel();
-    speechSynthesis.speak(u);
-  }
-  function setupRecognition(){
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if(!SR) return null;
-    const r = new SR();
-    r.lang = 'he-IL';
-    r.interimResults = true;
-    r.continuous = true;
-    r.maxAlternatives = 5;
-
-    r.onstart = () => {
-      listening = true;
-      $('listenBtn').textContent = '🎧 הזיהוי פועל ברצף';
-      $('listenBtn').disabled = true;
-      setStatus('מקשיב ברצף — קרא את המילה שעל המסך', 'listen');
-    };
-
-    r.onend = () => {
-      listening = false;
-      // Chrome לפעמים סוגר את מנוע הזיהוי אחרי שקט או אחרי תוצאה.
-      // כאן אנחנו מחזירים אותו מיד, בזמן שזרם המיקרופון עצמו נשאר פתוח.
-      if(keepRecognitionRunning && micReady && !$('trainer').classList.contains('hidden')){
-        setTimeout(() => {
-          try{ recognition.start(); }catch(e){}
-        }, 250);
-      } else {
-        $('listenBtn').disabled = false;
-        $('listenBtn').textContent = '🎧 התחל זיהוי רציף';
-      }
-    };
-
-    r.onerror = ev => {
-      if(ev.error === 'no-speech' || ev.error === 'aborted') return;
-      setStatus('שגיאת זיהוי: ' + ev.error + '. המיקרופון נשאר פתוח, מנסה להמשיך.', 'err');
-    };
-
-    r.onresult = ev => {
-      if(Date.now() < ignoreRecognitionUntil || feedbackSpeaking) return;
-      let finals = [];
-      let interim = '';
-      for(let i = ev.resultIndex; i < ev.results.length; i++){
-        const res = ev.results[i];
-        const txt = Array.from(res).map(x => x.transcript.trim()).filter(Boolean);
-        if(res.isFinal) finals.push(...txt);
-        else if(txt[0]) interim = txt[0];
-      }
-      if(interim && !finals.length){
-        $('heard').textContent = 'שומע: ' + interim;
-        return;
-      }
-      if(!finals.length || processingLock) return;
-
-      const heard = finals.join(' / ');
-      if(heard === lastTranscript) return;
-      lastTranscript = heard;
-      processingLock = true;
-      $('heard').textContent = 'נשמע: ' + heard;
-
-      const ok = finals.some(t => isMatch(words[idx], t));
-      if(ok){
-        stats.correct++; stats.attempts++; ensureWordStat(words[idx]).correct++;
-        updateStats();
-        setStatus('נכון', 'ok');
-        speakPhrase('נכון', () => {
-          next(false);
-          processingLock = false;
-          lastTranscript = '';
-          if(keepRecognitionRunning) setStatus('מקשיב ברצף — קרא את המילה הבאה', 'listen');
-        });
-      } else {
-        tries++; stats.wrong++; stats.repeats++; stats.attempts++; const ws = ensureWordStat(words[idx]); ws.wrong++; ws.repeats++;
-        updateStats();
-        setStatus('לא נכון — קרא שוב. המיקרופון עדיין פתוח', 'err');
-        const maxTries = parseInt($('maxTries').value || '2', 10);
-        speakPhrase('לא נכון, קרא שוב', () => {
-          if(tries >= maxTries) {
-            setStatus('שלוש טעויות — התוכנה משמיעה את המילה ועוברת הלאה', 'err');
-            setTimeout(() => {
-              speakCurrent(() => {
-                next(false);
-                processingLock = false;
-                lastTranscript = '';
-                if(keepRecognitionRunning && idx < words.length) setStatus('מקשיב ברצף — קרא את המילה הבאה', 'listen');
-              });
-            }, 250);
-          } else {
-            setTimeout(() => { processingLock = false; lastTranscript = ''; }, 450);
-          }
-        });
-      }
-    };
-    return r;
-  }
-
-  async function startListening(){
-    if($('mode').value === 'manual') { setStatus('מצב ידני: המורה מסמן נכון או שוב'); return; }
-    if(!micReady){
-      const okMic = await initMicrophoneOnce();
-      if(!okMic) return;
-    }
-    if(audioCtx && audioCtx.state === 'suspended'){
-      try{ await audioCtx.resume(); }catch(e){}
-    }
-    if(!recognition){ recognition = setupRecognition(); }
-    if(!recognition){ setStatus('הדפדפן לא תומך בזיהוי דיבור. נסה Chrome.', 'err'); return; }
-    keepRecognitionRunning = true;
-    processingLock = false;
-    lastTranscript = '';
-    try { recognition.start(); }
-    catch(e){
-      // אם הזיהוי כבר עובד, זו לא תקלה.
-      if(!listening) setStatus('לא ניתן להתחיל זיהוי: ' + e.message, 'err');
-    }
-  }
-  function tick(){
-    const elapsed = Math.floor((Date.now() - startedAt)/1000);
-    const left = sessionLimitSec ? Math.max(0, sessionLimitSec - elapsed) : elapsed;
-    $('sTime').textContent = sessionLimitSec ? fmt(left) : fmt(elapsed);
-    if(sessionLimitSec && elapsed >= sessionLimitSec && !$('trainer').classList.contains('hidden')) finish('time');
-  }
-
-  $('startBtn').onclick = () => {
-    const all = splitWords($('inputText').value);
-    const limit = Math.max(1, parseInt($('wordLimit').value || all.length, 10));
-    words = all.slice(0, limit);
-    if(!words.length){ alert('הדבק לפחות מילה אחת.'); return; }
-    idx = 0; stats = {correct:0, wrong:0, repeats:0, skipped:0, attempts:0}; wordStats = {}; startedAt = Date.now();
-    sessionLimitSec = Math.max(1, parseInt($('sessionMinutes').value || '3', 10)) * 60;
-    clearInterval(timer); timer = setInterval(tick, 500); tick();
-    $('menu').classList.add('hidden'); $('trainer').classList.remove('hidden'); $('summary').classList.add('hidden'); $('summary').innerHTML='';
-    $('listenBtn').disabled = true; $('nextBtn').disabled = false;
-    $('micInitBtn').disabled = false; $('micInitBtn').textContent = '🎙️ הפעל מיקרופון קבוע';
-    const manual = $('mode').value === 'manual';
-    $('goodBtn').classList.toggle('hidden', !manual); $('badBtn').classList.toggle('hidden', !manual);
-    $('listenBtn').classList.toggle('hidden', manual);
-    $('micInitBtn').classList.toggle('hidden', manual);
-    showWord();
   };
-  $('backBtn').onclick = () => { clearInterval(timer); speechSynthesis?.cancel?.(); stopMicrophone(); $('trainer').classList.add('hidden'); $('menu').classList.remove('hidden'); };
-  $('micInitBtn').onclick = initMicrophoneOnce;
-  $('listenBtn').onclick = startListening;
-  $('speakBtn').onclick = speakCurrent;
-  $('nextBtn').onclick = () => next(true);
-  $('goodBtn').onclick = () => { stats.correct++; stats.attempts++; ensureWordStat(words[idx]).correct++; updateStats(); setStatus('נכון', 'ok'); speakPhrase('נכון', ()=>setTimeout(()=>next(false),150)); };
-  $('badBtn').onclick = () => {
-    tries++; stats.wrong++; stats.repeats++; stats.attempts++;
-    const ws=ensureWordStat(words[idx]); ws.wrong++; ws.repeats++;
-    updateStats();
-    const maxTries = parseInt($('maxTries').value || '3', 10);
-    setStatus('לא נכון — קרא שוב', 'err');
-    speakPhrase('לא נכון, קרא שוב', () => {
-      if(tries >= maxTries){
-        setStatus('שלוש טעויות — התוכנה משמיעה את המילה ועוברת הלאה', 'err');
-        setTimeout(() => speakCurrent(() => next(false)), 250);
-      }
+
+  rec.onerror = function(){
+    document.getElementById("result").className = "bad";
+    document.getElementById("result").textContent = "שגיאת מיקרופון";
+  };
+
+  rec.start();
+}
+
+function updateHud(){
+  document.getElementById("correct").textContent = correct;
+  document.getElementById("wrong").textContent = wrong;
+}
+
+function endSession(){
+  if(!running) return;
+
+  running = false;
+  clearInterval(timerInterval);
+
+  const elapsed = Math.round((Date.now() - startTime) / 1000);
+  const total = correct + wrong;
+  const percent = total ? Math.round(correct / total * 100) : 0;
+
+  if(typeof Stats !== "undefined"){
+    Stats.saveResult({
+      program: "קול קורא",
+      correct: correct,
+      wrong: wrong,
+      percent: percent,
+      duration: elapsed
     });
-  };
-  window.addEventListener('beforeunload', stopMicrophone);
-  document.addEventListener('keydown', e => {
-    if($('trainer').classList.contains('hidden')) return;
-    if(e.key === ' ') { e.preventDefault(); startListening(); }
-    if(e.key === 'Enter') next(false);
-    if(e.key.toLowerCase() === 's') speakCurrent();
-    if(e.key === 'Escape') $('backBtn').click();
-  });
-})();
+  }
+
+  alert(
+    "הסשן הסתיים\n" +
+    "נכון: " + correct + "\n" +
+    "טעויות: " + wrong + "\n" +
+    "דיוק: " + percent + "%"
+  );
+
+  document.getElementById("game").classList.add("hidden");
+  document.getElementById("setup").classList.remove("hidden");
+}
 </script>
+
 </body>
 </html>
